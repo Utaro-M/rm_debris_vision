@@ -21,13 +21,13 @@ if __name__ == '__main__':
     info_msg.width = 240
     fovx = 60
     fovy = 114
-    # fovx = 100
-    # fovy = 200    
 
-    fx = info_msg.width / 2.0 / np.tan(np.deg2rad(fovx / 2.0)) 
-    fy = info_msg.height / 2.0 / np.tan(np.deg2rad(fovy / 2.0)) 
-    cx = info_msg.width / 2.0 
-    cy = info_msg.height / 2.0 
+    fx = info_msg.width / 2.0 / \
+         np.tan(np.deg2rad(fovx / 2.0))
+    fy = info_msg.height / 2.0 / \
+         np.tan(np.deg2rad(fovy / 2.0))
+    cx = info_msg.width / 2.0
+    cy = info_msg.height / 2.0
     info_msg.D = [-0.071069, 0.024841, -6.7e-05, 0.024236, 0.0]
     info_msg.K = np.array([fx, 0, cx,
                            0, fy, cy,
