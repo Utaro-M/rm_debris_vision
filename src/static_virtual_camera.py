@@ -18,9 +18,9 @@ if __name__ == '__main__':
     info_msg.header.frame_id = 'static_virtual_camera'
 
     info_msg.height = 640
-    info_msg.width = 240
-    fovx = 60
-    fovy = 114
+    info_msg.width = 480
+    fovx = 49
+    fovy = 80
     # fovx = 100
     # fovy = 200    
 
