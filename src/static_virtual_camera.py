@@ -3,12 +3,14 @@
 import rospy
 import numpy as np
 from sensor_msgs.msg import CameraInfo
-
-
-def timer_cb(event):
-    info_msg.header.stamp = rospy.Time.now()
+import tf
+from tf2_msgs.msg import TFMessage
+def timer_cb(msg):
+    # info_msg.header.stamp =  msg.transforms[0].header.stamp
+    info_msg.header.stamp = rospy.Time(0)  # - rospy.Duration(1.0)
+    # print (info_msg.header.stamp)
+    # print (rospy.Time.now())
     pub_info.publish(info_msg)
-
 
 if __name__ == '__main__':
     rospy.init_node('static_virtual_camera')
@@ -22,7 +24,7 @@ if __name__ == '__main__':
     fovx = 49
     fovy = 80
     # fovx = 100
-    # fovy = 200    
+    # fovy = 200
 
     fx = info_msg.width / 2.0 / np.tan(np.deg2rad(fovx / 2.0)) 
     fy = info_msg.height / 2.0 / np.tan(np.deg2rad(fovy / 2.0)) 
@@ -46,6 +48,7 @@ if __name__ == '__main__':
     # info_msg.K = [496.734185, 0.0, 368.095466, 0.0, 491.721745, 248.578629, 0.0, 0.0, 1.0]
     # info_msg.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     # info_msg.P = [471.903168, 0.0, 386.903326, 0.0, 0.0, 489.443268, 248.733955, 0.0, 0.0, 0.0, 1.0, 0.0]
-
-    rospy.Timer(rospy.Duration(1.0/30), timer_cb)
+    
+    rospy.Subscriber("/tf", TFMessage, timer_cb)        
+    # rospy.Timer(rospy.Duration(1.0/30), timer_cb)
     rospy.spin()
