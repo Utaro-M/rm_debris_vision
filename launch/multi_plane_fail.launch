@@ -2,6 +2,8 @@
   <arg name="create_manager" default="true" />
   <arg name="multisense_pcl2" default="/multisense_local/image_points2_color" />
   <arg name="manager" default="camera_nodelet_manager" />
+  <rosparam param="/use_sim_time">true</rosparam>
+  
   <node if="$(arg create_manager)"
         pkg="nodelet" type="nodelet" name="camera_nodelet_manager"
         args="manager" output="screen"/>
@@ -30,14 +32,11 @@
         pkg="nodelet" type="nodelet"
         args="load jsk_pcl/MultiPlaneSACSegmentation /$(arg manager)">
     <remap from="~input" to="/passthrough/output" />
-     <!-- <remap from="~input" to="$(arg multisense_pcl2)" /> -->
-    <!-- <remap from="~input" to="/kinect_head/depth_registered/points"/> -->
     <rosparam>
       use_normal: false
       use_clusters: false
       use_imu_parallel: false
       use_imu_perpendicular: false
-      <!-- min_inlier: 500 -->
       max_iterations: 500
       
 
