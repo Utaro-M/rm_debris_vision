@@ -26,7 +26,7 @@ from jsk_recognition_msgs.msg import ClusterPointIndices
 #     rospy.spin()nppn
 thre = 10000
 def timer_cb(msg1,msg2):
-    print(msg1.header)
+    # print(msg1.header)
     planes_indices = msg1.cluster_indices
     ind=0
     longest_ind=0
@@ -34,14 +34,14 @@ def timer_cb(msg1,msg2):
     if(len(planes_indices) >=1):
         for plane in planes_indices:
             length=len(plane.indices)
-            print ("loop{}".format(ind))
-            print(length)
+            # print ("loop{}".format(ind))
+            # print(length)
             if (length>longest_length):
                 longest_ind=ind
                 longest_length=length
                 ind+=1
                 # info_msg.header=msg1.header
-        print(msg2.polygons[longest_ind].polygon.points[0])
+        # print(msg2.polygons[longest_ind].polygon.points[0])
         info_msg=msg2.polygons[longest_ind]
         pub_info.publish(info_msg)
 
