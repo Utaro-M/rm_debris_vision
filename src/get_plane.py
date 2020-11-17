@@ -52,6 +52,8 @@ if __name__ == '__main__':
     info_msg=PolygonStamped()
     sub1 = message_filters.Subscriber("/organized_multi_plane_segmentation/output_refined",ClusterPointIndices)
     sub2 = message_filters.Subscriber("/organized_multi_plane_segmentation/output_refined_polygon",PolygonArray )
+    # sub1 = message_filters.Subscriber("/multi_plane_sac_segmentation/output_refined",ClusterPointIndices)
+    # sub2 = message_filters.Subscriber("/multi_plane_sac_segmentation/output_refined_polygon",PolygonArray )
     
     fps=10.0
     delay=1 / fps *0.5

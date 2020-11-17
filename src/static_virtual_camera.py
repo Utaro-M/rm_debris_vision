@@ -21,13 +21,17 @@ if __name__ == '__main__':
 
     # info_msg.height = 500
     # info_msg.width = 960
-    # info_msg.height = 480
-    # info_msg.width = 640
-    info_msg.height = 544
-    info_msg.width = 1024
+    info_msg.height = 480
+    info_msg.width = 640
+    # info_msg.height = 544
+    # info_msg.width = 1024
+    # info_msg.height = 1024
+    # info_msg.width = 544
     info_msg.distortion_model = "rational_polynomial"
     fovx = 80
     fovy = 49
+    # fovx = 49
+    # fovy = 80
     # fovx = 100
     # fovy = 200
 
