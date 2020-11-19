@@ -35,7 +35,7 @@
 (setq coords (make-coords))
 (setq com (make-cube 100 100 100))
 (send com :set-color #f(1 0 0))
-(ros::subscribe "get_plane/output" geometry_msgs::PolygonStamped #'call-back)
+(ros::subscribe "get_plane/focus_plane" geometry_msgs::PolygonStamped #'call-back)
 
 (do-until-key
  (ros::spin-once)

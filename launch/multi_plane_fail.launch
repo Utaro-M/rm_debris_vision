@@ -38,9 +38,6 @@
       use_imu_parallel: false
       use_imu_perpendicular: false
       max_iterations: 500
-      
-
     </rosparam>
   </node>
-
 </launch>

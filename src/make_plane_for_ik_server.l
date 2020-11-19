@@ -4,16 +4,6 @@
 ;;;
 (ros::load-ros-manifest "rm_debris_vision")
 
-;;;
-;; (defun add-two-ints (req)
-;;   (let ((m (send req :response)))
-;;     (format *error-output* "Returning [~d + ~d = ~d]~%"
-;;             (send req :a) (send req :b)
-;;             (+ (send req :a) (send req :b)))
-;;     (send m :sum  (+ (send req :a) (send req :b)))
-;;     m))
-;;;
-;;;
 (ros::roseus "make_plane_for_ik_server")
 (setq points (instance geometry_msgs::PolygonStamped :init))
 (setq com-save #f(0 0 0)) 
@@ -52,7 +42,7 @@
 ;; (setq coords (make-coords))
 ;; (setq com (make-cube 100 100 100))
 ;; (send com :set-color #f(1 0 0))
-(ros::subscribe "get_plane/output" geometry_msgs::PolygonStamped #'call-back)
+(ros::subscribe "get_plane/focus_plane" geometry_msgs::PolygonStamped #'call-back)
 
 (ros::advertise-service "make_plane" rm_debris_vision::Polygon #'send_plane)
 
