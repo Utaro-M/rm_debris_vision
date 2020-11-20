@@ -26,7 +26,10 @@ def timer_cb(msg1,msg2,msg3):
                 longest_ind=ind
                 longest_length=length
                 ind+=1
-                
+        print(longest_ind)
+        # print (msg2.polygons)
+        print (len(msg2.polygons))
+        print (len(planes_indices))
         info_msg_polygon.polygons=[msg2.polygons[longest_ind]]
         info_msg_coefficient.coefficients=[msg3.coefficients[longest_ind]]
         pub_info_polygon.publish(info_msg_polygon)
@@ -41,7 +44,8 @@ if __name__ == '__main__':
     sub1 = message_filters.Subscriber("plane_extraction/plane_cluster_indices",ClusterPointIndices)
     sub2 = message_filters.Subscriber("plane_extraction/plane_polygons",PolygonArray )
     sub3 = message_filters.Subscriber("plane_extraction/plane_coefficients", ModelCoefficientsArray)
-    fps=10.0
+    # fps=10.0
+    fps=60.0
     delay=1 / fps *0.5
 
     mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],5,delay)
