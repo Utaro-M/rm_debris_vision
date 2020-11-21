@@ -1,0 +1,5 @@
+string filename
+# std_msgs/Empty 
+---
+pcl_msgs/PointIndices indices
+# geometry_msgs/Vector3 com
