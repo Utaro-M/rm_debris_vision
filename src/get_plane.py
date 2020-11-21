@@ -13,14 +13,17 @@ from jsk_recognition_msgs.msg import ModelCoefficientsArray
 thre = 10000
 def timer_cb(msg1,msg2,msg3):
     # print(msg1.header)
-    info_msg_polygon=msg2
-    info_msg_coefficient=msg3
+    # info_msg_polygon=msg2
+    info_msg_polygon = PolygonArray()    
+    # info_msg_coefficient=msg3
+    info_msg_coefficient = ModelCoefficientsArray()
     planes_indices = msg1.cluster_indices
+    print('len(planes_indices)', len(planes_indices))
     ind=0
     longest_ind=0
     longest_length=0
     if(len(planes_indices) >=1):
-        for plane in planes_indices:
+        for ind, plane in enumerate(planes_indices):
             length=len(plane.indices)
             if (length>longest_length):
                 longest_ind=ind
@@ -31,10 +34,14 @@ def timer_cb(msg1,msg2,msg3):
         print (len(msg2.polygons))
         print (len(planes_indices))
         info_msg_polygon.polygons=[msg2.polygons[longest_ind]]
+        info_msg_polygon.header = msg2.header
         info_msg_coefficient.coefficients=[msg3.coefficients[longest_ind]]
+        info_msg_coefficient.header = msg3.header
         pub_info_polygon.publish(info_msg_polygon)
         pub_info_coefficient.publish(info_msg_coefficient)
+        print('len(msg2.polygons)', len(msg2.polygons))
         pub_info_polygonstamped.publish(msg2.polygons[longest_ind])
+                                   
 if __name__ == '__main__':
     rospy.init_node('get_plane')
 
@@ -49,6 +56,7 @@ if __name__ == '__main__':
     delay=1 / fps *0.5
 
     mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],5,delay)
+    # mf = message_filters.TimeSynchronizer([sub1,sub2,sub3], 10)
     mf.registerCallback(timer_cb)
 
     rospy.spin()
