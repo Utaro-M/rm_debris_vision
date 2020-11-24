@@ -18,7 +18,7 @@ def timer_cb(msg1,msg2,msg3):
     # info_msg_coefficient=msg3
     info_msg_coefficient = ModelCoefficientsArray()
     planes_indices = msg1.cluster_indices
-    print('len(planes_indices)', len(planes_indices))
+    # print('len(planes_indices)', len(planes_indices))
     ind=0
     longest_ind=0
     longest_length=0
@@ -29,17 +29,17 @@ def timer_cb(msg1,msg2,msg3):
                 longest_ind=ind
                 longest_length=length
                 ind+=1
-        print(longest_ind)
-        # print (msg2.polygons)
-        print (len(msg2.polygons))
-        print (len(planes_indices))
+        # print(longest_ind)
+        # # print (msg2.polygons)
+        # print (len(msg2.polygons))
+        # print (len(planes_indices))
         info_msg_polygon.polygons=[msg2.polygons[longest_ind]]
         info_msg_polygon.header = msg2.header
         info_msg_coefficient.coefficients=[msg3.coefficients[longest_ind]]
         info_msg_coefficient.header = msg3.header
         pub_info_polygon.publish(info_msg_polygon)
         pub_info_coefficient.publish(info_msg_coefficient)
-        print('len(msg2.polygons)', len(msg2.polygons))
+        # print('len(msg2.polygons)', len(msg2.polygons))
         pub_info_polygonstamped.publish(msg2.polygons[longest_ind])
                                    
 if __name__ == '__main__':
