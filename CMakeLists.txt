@@ -61,6 +61,7 @@ add_service_files(
   FILES
   Polygon.srv
   Indices.srv
+  Clip_Point.srv
   # Service2.srv
 )
 

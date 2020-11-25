@@ -1,0 +1,4 @@
+geometry_msgs/Point32 box_size
+---
+geometry_msgs/Point32 clip_point
+# geometry_msgs/Vector3 com
