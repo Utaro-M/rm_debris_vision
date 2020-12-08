@@ -12,7 +12,6 @@
 (setq res (ros::service-call "rarm_remove_cloud_indices" req t))
 (print res)
 
-(ros::load-ros-manifest "roseus")
 
 ;;;
 (ros::advertise "rarm_remove_indices" pcl_msgs::PointIndices 1)

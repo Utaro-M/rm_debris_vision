@@ -1,4 +1,6 @@
 geometry_msgs/Point32 box_size
+std_msgs/Bool use_auto_clip_point
+geometry_msgs/Point32 clip_point_req
 ---
 geometry_msgs/Point32 clip_point
 # geometry_msgs/Vector3 com

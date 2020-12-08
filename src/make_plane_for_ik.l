@@ -24,7 +24,7 @@
   
   (setq ave  (float-vector (/ sum_x (float len)) (/ sum_y (float len)) (/ sum_z (float len))))
   (setq tmp ave)
-  (format t "com = ~A~%" (scale 0.001 ave))
+  ;; (format t "com = ~A~%" (scale 0.001 ave))
   ;; (send com :coords (make-coords :pos (scale 1000 tmp)))
   ;; (send com :coords (make-coords))
   (send com :translate  tmp)
