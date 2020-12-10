@@ -7,19 +7,40 @@ from sensor_msgs.msg import PointCloud2
 
 points_multisense=None
 points_l515=None
-switch_flag =False
-
-def timer_cb(msg1,msg2):
+switch_flag =True
+points=None
+# def timer_cb(msg1,msg2):
+#     global points_multisense
+#     global points_l515
+#     global switch_flag
+#     points_multisense=msg1
+#     points_l515=msg2
+#     if switch_flag:
+#         points=points_multisense
+#     else:
+#         points=points_l515
+#     print ("OK")    
+#     pub_info_input_cloud.publish(points)
+def timer_cb1(msg):
     global points_multisense
-    global points_l515
     global switch_flag
-    points_multisense=msg1
-    points_l515=msg2
+    global points
+    points_multisense=msg
     if switch_flag:
         points=points_multisense
-    else:
-        points=points_l515
+    print ("OK")    
     pub_info_input_cloud.publish(points)
+
+def timer_cb2(msg):
+    global points_l515
+    global switch_flag
+    global points
+    points_l515=msg
+    if (not switch_flag):
+        points=points_l515
+    print ("OK")    
+    pub_info_input_cloud.publish(points)    
+
 
 def get_trigger (req):
     global switch_flag
@@ -35,14 +56,15 @@ if __name__ == '__main__':
     rospy.init_node('switch_input_cloud')
 
     pub_info_input_cloud = rospy.Publisher('/switched_cloud', PointCloud2, queue_size=1)
-    sub1 = message_filters.Subscriber("/multisense_local/organized_image_points2_color",PointCloud2)
-    sub2 = message_filters.Subscriber("/rs_l515/depth_registered/points",PointCloud2)
-
+    # sub1 = message_filters.Subscriber("/multisense_local/organized_image_points2_color",PointCloud2)
+    # sub2 = message_filters.Subscriber("/rs_l515/depth_registered/points",PointCloud2)
+    rospy.Subscriber("/multisense_local/organized_image_points2_color",PointCloud2,timer_cb1)
+    rospy.Subscriber("/rs_l515/depth_registered/points",PointCloud2,timer_cb2)
     s = rospy.Service('switch_pcl', SwitchFlag, get_trigger)
     fps=0.5
     delay=1 / fps *0.5
 
-    mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],5,delay)
+    # mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],5,delay)
 
-    mf.registerCallback(timer_cb)
+    # mf.registerCallback(timer_cb)
     rospy.spin()
