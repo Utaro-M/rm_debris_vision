@@ -1,0 +1,3 @@
+std_msgs/Bool trigger
+---
+sensor_msgs/PointCloud2 input_cloud

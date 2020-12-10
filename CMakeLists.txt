@@ -62,7 +62,8 @@ add_service_files(
   Polygon.srv
   Indices.srv
   Clip_Point.srv
-  # Service2.srv
+  SwitchFlag.srv
+
 )
 
 ## Generate actions in the 'action' folder
