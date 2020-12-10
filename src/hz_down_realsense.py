@@ -28,10 +28,10 @@ if __name__ == '__main__':
     sub1 = message_filters.Subscriber("/rs_l515/color/camera_info",CameraInfo)
     sub2 = message_filters.Subscriber("/rs_l515/color/image_rect_color", Image)
     sub3 = message_filters.Subscriber("/rs_l515/aligned_depth_to_color/image_raw", Image)    
-    fps=10.0
+    fps=0.5
     delay=1 / fps *0.5
 
-    mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],5,delay)
+    mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],3,delay)
     mf.registerCallback(timer_cb)
     rate = rospy.get_param("~rate", 5)
     r = rospy.Rate(rate)
