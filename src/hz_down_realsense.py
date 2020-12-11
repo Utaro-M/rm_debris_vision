@@ -28,7 +28,7 @@ if __name__ == '__main__':
     sub1 = message_filters.Subscriber("/rs_l515/color/camera_info",CameraInfo)
     sub2 = message_filters.Subscriber("/rs_l515/color/image_rect_color", Image)
     sub3 = message_filters.Subscriber("/rs_l515/aligned_depth_to_color/image_raw", Image)    
-    fps=0.5
+    fps=0.1
     delay=1 / fps *0.5
 
     mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],3,delay)
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     rate = rospy.get_param("~rate", 5)
     r = rospy.Rate(rate)
     while not rospy.is_shutdown():
-        if msg1_save is not None:
+        if msg2_save is not None:
             pub_info1.publish(msg1_save)
             pub_info2.publish(msg2_save)
             pub_info3.publish(msg3_save)

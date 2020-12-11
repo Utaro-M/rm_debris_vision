@@ -28,7 +28,8 @@ def timer_cb1(msg):
     points_multisense=msg
     if switch_flag:
         points=points_multisense
-    print ("OK")    
+    # print ("OK") 
+    
     pub_info_input_cloud.publish(points)
 
 def timer_cb2(msg):
@@ -38,7 +39,7 @@ def timer_cb2(msg):
     points_l515=msg
     if (not switch_flag):
         points=points_l515
-    print ("OK")    
+    # print ("OK")    
     pub_info_input_cloud.publish(points)    
 
 
