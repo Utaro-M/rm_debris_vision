@@ -7,6 +7,7 @@ import copy
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import PointCloud2
+from time import sleep
 
 msg1_save=None
 msg2_save=None
@@ -17,7 +18,12 @@ def timer_cb(msg1,msg2,msg3):
     global msg3_save 
     msg1_save = msg1
     msg2_save = msg2
-    msg3_save = msg3    
+    msg3_save = msg3
+    # pub_info1.publish(msg1_save)
+    # pub_info2.publish(msg2_save)
+    # pub_info3.publish(msg3_save)
+    # sleep(0.2)
+    # print "callback"
     
 if __name__ == '__main__':
     rospy.init_node('hz_down_realsense')
@@ -28,18 +34,23 @@ if __name__ == '__main__':
     sub1 = message_filters.Subscriber("/rs_l515/color/camera_info",CameraInfo)
     sub2 = message_filters.Subscriber("/rs_l515/color/image_rect_color", Image)
     sub3 = message_filters.Subscriber("/rs_l515/aligned_depth_to_color/image_raw", Image)    
-    fps=0.1
+    fps=0.2
     delay=1 / fps *0.5
 
     mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],3,delay)
     mf.registerCallback(timer_cb)
-    rate = rospy.get_param("~rate", 5)
-    r = rospy.Rate(rate)
+    # rate = rospy.get_param("~rate", 5)
+    rate=5
+    r = rospy.Rate(rate)            
     while not rospy.is_shutdown():
+        # print "OK"
         if msg2_save is not None:
             pub_info1.publish(msg1_save)
             pub_info2.publish(msg2_save)
             pub_info3.publish(msg3_save)
+            print "OK"
         else:
             print("Nothing")
+
         r.sleep()
+    # rospy.spin()
