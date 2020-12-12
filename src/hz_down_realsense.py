@@ -48,7 +48,7 @@ if __name__ == '__main__':
             pub_info1.publish(msg1_save)
             pub_info2.publish(msg2_save)
             pub_info3.publish(msg3_save)
-            print "OK"
+            # print "OK"
         else:
             print("Nothing")
 
