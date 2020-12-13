@@ -6,6 +6,7 @@
 (setq points (instance geometry_msgs::PolygonStamped :init))
 (setq tmp-point-list (send points :polygon :points))
 (setq com-save #f(0 0 0)) 
+
 (defun send_plane(req)
   (let ((m (send req :response)))
     (send m :pts points)
@@ -22,7 +23,6 @@
 (setq cnt 0)
 
 (do-until-key
- (ros::spin-once)
  (setq cnt (+ cnt 1))
  ;;平面がない時はリセット
  (if (= cnt 10000000)
@@ -34,4 +34,5 @@
               ))
         (setq tmp-point-list (send points :polygon :points))
         (setq cnt 0)))
+  (ros::spin-once)
  )
