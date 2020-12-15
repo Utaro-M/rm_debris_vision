@@ -11,7 +11,9 @@ from jsk_recognition_msgs.msg import PolygonArray
 from jsk_recognition_msgs.msg import ClusterPointIndices
 from jsk_recognition_msgs.msg import ModelCoefficientsArray
 thre = 10000
+polygons=None
 def timer_cb(msg1,msg2,msg3):
+    global polygons
     # print(msg1.header)
     # info_msg_polygon=msg2
     info_msg_polygon = PolygonArray()    
@@ -40,8 +42,12 @@ def timer_cb(msg1,msg2,msg3):
         pub_info_polygon.publish(info_msg_polygon)
         pub_info_coefficient.publish(info_msg_coefficient)
         # print('len(msg2.polygons)', len(msg2.polygons))
-        pub_info_polygonstamped.publish(msg2.polygons[longest_ind])
-                                   
+        polygons=msg2.polygons[longest_ind]
+    if polygons is not None:
+        pub_info_polygonstamped.publish(polygons)
+    else:
+        print("finding planes")
+
 if __name__ == '__main__':
     rospy.init_node('get_plane')
 
@@ -52,7 +58,7 @@ if __name__ == '__main__':
     sub2 = message_filters.Subscriber("plane_extraction/plane_polygons",PolygonArray )
     sub3 = message_filters.Subscriber("plane_extraction/plane_coefficients", ModelCoefficientsArray)
     # fps=10.0
-    fps=60.0
+    fps=10.0
     delay=1 / fps *0.5
 
     mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2,sub3],5,delay)

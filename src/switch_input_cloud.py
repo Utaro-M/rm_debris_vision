@@ -41,7 +41,6 @@ def timer_cb2(msg):
     print ("OK")    
     pub_info_input_cloud.publish(points)    
 
-
 def get_trigger (req):
     global switch_flag
     switch_flag=req.trigger.data
