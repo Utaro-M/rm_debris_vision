@@ -2,4 +2,5 @@ string filename
 # std_msgs/Empty 
 ---
 geometry_msgs/PolygonStamped pts
-# geometry_msgs/Vector3 com
+geometry_msgs/Vector3 com
+geometry_msgs/Vector3 normal_vec

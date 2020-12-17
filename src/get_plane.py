@@ -16,7 +16,7 @@ def timer_cb(msg1,msg2,msg3):
     global polygons
     # print(msg1.header)
     # info_msg_polygon=msg2
-    info_msg_polygon = PolygonArray()    
+    info_msg_polygon = PolygonArray()
     # info_msg_coefficient=msg3
     info_msg_coefficient = ModelCoefficientsArray()
     planes_indices = msg1.cluster_indices
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     pub_info_coefficient = rospy.Publisher('~output_coefficient', ModelCoefficientsArray, queue_size=1)
     pub_info_polygonstamped = rospy.Publisher('~focus_plane', PolygonStamped, queue_size=1)
     sub1 = message_filters.Subscriber("plane_extraction/plane_cluster_indices",ClusterPointIndices)
-    sub2 = message_filters.Subscriber("plane_extraction/plane_polygons",PolygonArray )
+    sub2 = message_filters.Subscriber("plane_extraction/plane_polygons",PolygonArray)
     sub3 = message_filters.Subscriber("plane_extraction/plane_coefficients", ModelCoefficientsArray)
     # fps=10.0
     fps=10.0
