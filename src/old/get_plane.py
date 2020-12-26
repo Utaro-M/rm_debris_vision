@@ -35,7 +35,7 @@ def timer_cb(msg1,msg2,msg3):
         # # print (msg2.polygons)
         # print (len(msg2.polygons))
         # print (len(planes_indices))
-        info_msg_polygon.polygons=[msg2.polygons[longest_ind]]
+        info_msg_polygon.polygons=msg2.polygons
         info_msg_polygon.header = msg2.header
         info_msg_coefficient.coefficients=[msg3.coefficients[longest_ind]]
         info_msg_coefficient.header = msg3.header
