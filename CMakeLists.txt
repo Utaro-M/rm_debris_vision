@@ -63,6 +63,7 @@ add_service_files(
   Indices.srv
   Clip_Point.srv
   SwitchFlag.srv
+  GetPlane.srv
 
 )
 
