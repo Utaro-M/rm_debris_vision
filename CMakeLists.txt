@@ -64,7 +64,7 @@ add_service_files(
   Clip_Point.srv
   SwitchFlag.srv
   GetPlane.srv
-
+  PredK.srv
 )
 
 ## Generate actions in the 'action' folder
