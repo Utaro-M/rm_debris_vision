@@ -28,10 +28,10 @@ if __name__ == '__main__':
     # info_msg.height = 1024
     # info_msg.width = 544
     info_msg.distortion_model = "rational_polynomial"
-    fovx = 80
-    fovy = 49
-    # fovx = 49
-    # fovy = 80
+    # fovx = 80
+    # fovy = 49
+    fovx = 70
+    fovy = 43    
     # fovx = 100
     # fovy = 200
 
@@ -58,6 +58,6 @@ if __name__ == '__main__':
     # info_msg.R = [0.9999911785125732, -0.004174254834651947, -0.00047162213013507426, 0.004174285102635622, 0.9999912977218628, 6.258231587707996e-05, 0.0004713567905128002, -6.455044785980135e-05, 0.9999998807907104]
 
     
-    rospy.Subscriber("/tf", TFMessage, timer_cb)        
+    rospy.Subscriber("/tf", TFMessage, timer_cb)
     # rospy.Timer(rospy.Duration(1.0/30), timer_cb)
     rospy.spin()
