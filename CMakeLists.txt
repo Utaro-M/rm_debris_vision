@@ -65,6 +65,7 @@ add_service_files(
   SwitchFlag.srv
   GetPlane.srv
   PredK.srv
+  CPthre.srv
 )
 
 ## Generate actions in the 'action' folder
