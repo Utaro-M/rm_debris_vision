@@ -1,4 +1,6 @@
 std_msgs/Int32 larm
 std_msgs/Int32 rarm
+std_msgs/Int32 larm_cover
+std_msgs/Int32 rarm_cover
 ---
 # sensor_msgs/PointCloud2 input_cloud
