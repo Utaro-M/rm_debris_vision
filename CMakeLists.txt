@@ -62,6 +62,7 @@ add_service_files(
   Polygon.srv
   Indices.srv
   Clip_Point.srv
+  Clip_Point_CoverCheck.srv  
   SwitchFlag.srv
   GetPlane.srv
   PredK.srv
