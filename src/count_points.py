@@ -4,9 +4,11 @@ import rospy
 import message_filters
 import numpy as np
 import copy
+from cv_bridge import CvBridge
+import cv2
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import PointCloud2
-
+from sensor_msgs.msg import Image
 from pcl_msgs.msg import PointIndices
 from std_msgs.msg import Float64, Bool ,Int32,Int32MultiArray
 from rm_debris_vision.srv import CPthre
@@ -17,8 +19,11 @@ threshould_l = 1000
 threshould_r = 1000
 threshould_cover_l = 500
 threshould_cover_r = 500
+threshould_in_vision=10000
 length_l=0
 length_r=0
+in_vision_r=1
+in_vision_l=1
 
 def timer_cb(msg1,msg2,msg3,msg4):
     # planes_indices_l = msg1.indices
@@ -51,7 +56,7 @@ def timer_cb(msg1,msg2,msg3,msg4):
         flag_cover_r= 1        
 
     print('length_l', length_l)
-    print('length_r', length_r)        
+    print('length_r', length_r)
     print('flag_l', flag_l)
     print('flag_r', flag_r)    
 
@@ -59,9 +64,36 @@ def timer_cb(msg1,msg2,msg3,msg4):
     pub_num_r.publish(length_r)        
     # pub_drop_flag_l.publish(flag_l)
     # pub_drop_flag_r.publish(flag_r)
-    flag_list.data=[flag_l,flag_r,flag_cover_l,flag_cover_r]
+    flag_list.data=[flag_r,flag_l,flag_cover_r,flag_cover_l,in_vision_r,in_vision_l]
     pub_drop_flag.publish(flag_list)
 
+bridge=CvBridge()    
+def count_rarm(msg):
+    global in_vision_r
+    # img=msg.data
+    img = bridge.imgmsg_to_cv2(msg, "mono8")
+    # print('length', len(img))
+    # print('num 0', np.count_nonzero(img==0))
+    # print('num 255', np.count_nonzero(img==255))
+    num=np.count_nonzero(img==0)
+    print('in_vision rarm num', num)
+    if num < threshould_in_vision:
+        in_vision_r= 0
+    else:
+        in_vision_r= 1
+    print('in_vision_r', in_vision_r)
+    
+def count_larm(msg):
+    global in_vision_l
+    img = bridge.imgmsg_to_cv2(msg, "mono8")
+    num=np.count_nonzero(img==0)
+    print('in_vision larm num', num)
+    if num < threshould_in_vision:
+        in_vision_l= 0
+    else:
+        in_vision_l= 1
+    print('in_vision_l', in_vision_l)
+    
 def get_trigger (req):
     global threshould_l
     global threshould_r
@@ -90,6 +122,9 @@ if __name__ == '__main__':
     sub3 = message_filters.Subscriber("/in_hand_point/attention_clipper_cover_larm/output/point_indices",PointIndices)
     sub4 = message_filters.Subscriber("/in_hand_point/attention_clipper_cover_rarm/output/point_indices",PointIndices)    
 
+    rospy.Subscriber("/robot_to_mask_image_rarm/output",Image,count_rarm)
+    # rospy.Subscriber("/mask_image_to_label/output",Image,count_rarm)    
+    rospy.Subscriber("/robot_to_mask_image_larm/output",Image,count_larm)    
     fps=0.1
     delay=1 / fps *0.5
 
