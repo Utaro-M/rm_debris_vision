@@ -1,6 +1,7 @@
+std_msgs/Bool use_auto_clip_point
+std_msgs/Bool target
 geometry_msgs/Point32 box_size_l
 geometry_msgs/Point32 box_tilt_l
-std_msgs/Bool use_auto_clip_point
 geometry_msgs/Point32 clip_point_req_l
 geometry_msgs/Point32 box_size_r
 geometry_msgs/Point32 box_tilt_r

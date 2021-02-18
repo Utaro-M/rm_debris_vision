@@ -19,16 +19,16 @@ threshould_l = 1000
 threshould_r = 1000
 threshould_cover_l = 500
 threshould_cover_r = 500
-threshould_in_vision=10000
-length_l=0
-length_r=0
+threshould_in_vision=2000
+# length_l=0
+# length_r=0
 in_vision_r=1
 in_vision_l=1
 
 def timer_cb(msg1,msg2,msg3,msg4):
     # planes_indices_l = msg1.indices
     # planes_indices_r = msg2.indices
-
+    # global length_r,length_l,length_cover_r,length_cover_l
     length_l=len(msg1.indices)
     length_r=len(msg2.indices)
     length_cover_l=len(msg3.indices)
@@ -55,11 +55,17 @@ def timer_cb(msg1,msg2,msg3,msg4):
     else:
         flag_cover_r= 1        
 
-    print('length_l', length_l)
-    print('length_r', length_r)
-    print('flag_l', flag_l)
-    print('flag_r', flag_r)    
-
+    # print('in_hand points   [r , l] = {}'.format([length_r,length_l]))
+    print('inhand R', length_r)
+    print('inhand L', length_l)
+    print('covered R', length_cover_r)
+    print('covered L', length_cover_l)    
+    print('holding flag     [r , l] = {}'.format([flag_r,flag_l]))    
+    # print('flag_l', flag_l)
+    # print('flag_r', flag_r)
+    # print('in_vision points [r , l] = {}'.format([in_vision_r,in_vision_l]))
+    print('arm coverd flag  [r , l] = {}'.format([flag_cover_r,flag_cover_l]))
+    print('in_vision flag   [r , l] = {}'.format([in_vision_r,in_vision_l]))
     pub_num_l.publish(length_l)
     pub_num_r.publish(length_r)        
     # pub_drop_flag_l.publish(flag_l)
@@ -76,23 +82,23 @@ def count_rarm(msg):
     # print('num 0', np.count_nonzero(img==0))
     # print('num 255', np.count_nonzero(img==255))
     num=np.count_nonzero(img==0)
-    print('in_vision rarm num', num)
+    # print('in_vision rarm num', num)
     if num < threshould_in_vision:
         in_vision_r= 0
     else:
         in_vision_r= 1
-    print('in_vision_r', in_vision_r)
+    # print('in_vision_r', in_vision_r)
     
 def count_larm(msg):
     global in_vision_l
     img = bridge.imgmsg_to_cv2(msg, "mono8")
     num=np.count_nonzero(img==0)
-    print('in_vision larm num', num)
+    # print('in_vision larm num', num)
     if num < threshould_in_vision:
         in_vision_l= 0
     else:
         in_vision_l= 1
-    print('in_vision_l', in_vision_l)
+    # print('in_vision_l', in_vision_l)
     
 def get_trigger (req):
     global threshould_l
