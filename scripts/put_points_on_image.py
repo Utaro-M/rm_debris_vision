@@ -18,6 +18,7 @@ from rm_debris_vision.srv import GraspCandidates
 
 class PutPointsOnImage(object):
     def __init__(self):
+        
         self.cameramodels = PinholeCameraModel()
         self.is_camera_arrived = False
         self.frame_id = None
@@ -30,16 +31,20 @@ class PutPointsOnImage(object):
         self.v = 0
         self.u_v_list = []
         self.header_frame_id=""        
+
+        # publish
         self.pub_point_stamped = rospy.Publisher("~output", PointStamped, queue_size=1)
         self.pub_image = rospy.Publisher("~output/image", Image, queue_size=1)
-        
+
+        # subscribe
         rospy.Subscriber('~input/camera_info', CameraInfo, self.camera_info_cb)
         # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
-        rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb)
+        rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
         # rospy.Subscriber("~input/polygon", Polygon, self.polygon_cb)        #test
         rospy.Subscriber("~input/image", Image, self.image_cb)
-        self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.display)
+        self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.display) #use service
 
+    #use service
     def display(self, req):
         rospy.logdebug("in display")
         print "OK"
@@ -74,6 +79,7 @@ class PutPointsOnImage(object):
         self.is_camera_arrived = True
         print "OK"
 
+    # add circles
     def image_cb(self,msg):
         self.header_frame_id = msg.header.frame_id
         if self.flag :
@@ -107,9 +113,7 @@ class PutPointsOnImage(object):
         self.u, self.v = self.cameramodels.project3dToPixel(pub_point)
         rospy.logdebug("u, v : {}, {}".format(self.u, self.v))
         
-
         # img1 = self.bridge.imgmsg_to_cv2(msg2,msg1.encoding)
-                
         # pub_msg = PointStamped()
         # pub_msg.header = msg.header
         # pub_msg.header.frame_id = self.frame_id
