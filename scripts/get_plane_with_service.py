@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# coding:utf-8
 import rospy
 import message_filters
 import numpy as np
@@ -31,7 +31,7 @@ def timer_cb(msg1,msg2,msg3):
                 # print "idx ={}".format(idx)
     else:
         planes_indices = msg1.cluster_indices
-        ind=0
+        # ind=0
         longest_ind=0
         longest_length=0
         if(len(planes_indices) >=1):
@@ -40,9 +40,11 @@ def timer_cb(msg1,msg2,msg3):
                 if (length>longest_length):
                     longest_ind=ind
                     longest_length=length
-                    ind+=1
+                    # ind+=1
             plane_idx=longest_ind
-    # print "plane_idx = {}".format(plane_idx)
+        #面積ではなく高い位置にあるものを選んだほうがよい？
+        # plane_idx=0
+
     if(len(msg2.polygons) >=1):
     # if msg2.polygons is not None:
         polygons=msg2.polygons[plane_idx]

@@ -68,6 +68,7 @@ add_service_files(
   GetPlane.srv
   PredK.srv
   CPthre.srv
+  GraspCandidates.srv
 )
 
 ## Generate actions in the 'action' folder

@@ -1,0 +1,30 @@
+<launch>
+
+  <param name="/use_sim_time" value="true" />
+
+  <!-- <node name="rosbag_play" -->
+  <!--       pkg="rosbag" type="play" -->
+  <!--       args="$(find jsk_pcl_ros_utils)/sample/data/arc2017_4objects.bag -\-clock -\-loop"> -->
+  <!-- </node> -->
+
+  <!-- <node name="reference_point_publisher" -->
+  <!--       pkg="rostopic" type="rostopic" -->
+  <!--       args="pub -r 1 -s reference_point_publisher/output geometry_msgs/PointStamped -->
+  <!--             '{header: {stamp: 'now', frame_id: 'HEAD_LINK0'}, point: {x: 500, y: 100, z: 100}}'"/> -->
+
+  <!-- <node name="reference_polygon_publisher" -->
+  <!--       pkg="rostopic" type="rostopic" -->
+  <!--       args="pub -r 10 reference_polygon_publisher/output geometry_msgs/PolygonStamped -->
+  <!--             '{header: {stamp: 'now', frame_id: 'HEAD_LINK0'}, polygon: {points: [{x: 500, y: 100, z: 100}, {x: 500, y: 500, z: 100}]}}'"/>  -->
+  
+  <node name="put_points_on_image"
+        pkg="rm_debris_vision" type="put_points_on_image.py">
+    <remap from="~input/camera_info" to="/multisense_local/left/camera_info" />
+    <!-- <remap from="~input/point_stamped" to="reference_point_publisher/output" /> -->
+    <remap from="~input/polygon_stamped" to="reference_polygon_publisher/output" />
+    <!-- <remap from="~input/polygon" to="get_plane/focus_plane" /> -->
+    <remap from="~input/image" to="/multisense_local/left/image_rect_color" />
+    
+  </node>
+
+</launch>
