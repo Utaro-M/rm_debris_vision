@@ -30,7 +30,7 @@ class PutPointsOnImage(object):
         self.u = 0
         self.v = 0
         self.u_v_list = []
-        self.header_frame_id=""        
+        self.header_frame_id=""
 
         # publish
         self.pub_point_stamped = rospy.Publisher("~output", PointStamped, queue_size=1)
@@ -38,46 +38,15 @@ class PutPointsOnImage(object):
 
         # subscribe
         rospy.Subscriber('~input/camera_info', CameraInfo, self.camera_info_cb)
-        # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
-        rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
-        # rospy.Subscriber("~input/polygon", Polygon, self.polygon_cb)        #test
         rospy.Subscriber("~input/image", Image, self.image_cb)
         self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.display) #use service
-
-    #use service
-    def display(self, req):
-        rospy.logdebug("in display")
-        print "OK"
-        if not self.is_camera_arrived:
-            return        
-        try:
-            transform = self.tf_buffer.lookup_transform(self.frame_id, self.header_frame_id, rospy.Time(0), rospy.Duration(1.0))
-            # transform = self.tf_buffer.lookup_transform(self.frame_id, "lleg_end_coords", rospy.Time(0), rospy.Duration(1.0)) 
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logerr('lookup_transform failed: {}'.format(e))
-            return
-        self.flag=True
-        u_v_list_tmp = []
-        points_list=req.l_points + req.r_points
-        for i in range (len(points_list)):
-            pose_stamped = PoseStamped()
-            pose_stamped.pose.position.x = points_list[i].x
-            pose_stamped.pose.position.y = points_list[i].y
-            pose_stamped.pose.position.z = points_list[i].z
-            
-            position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
-            pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
-            u, v = self.cameramodels.project3dToPixel(pub_point)
-            rospy.logdebug("u, v : {}, {}".format(u, v))
-            u_v_list_tmp.append([u,v])
-        self.u_v_list = u_v_list_tmp
-        print ("u_v_list_tmp={}".format(u_v_list_tmp))
-        
+        # rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
+        # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
+                
     def camera_info_cb(self, msg):
         self.cameramodels.fromCameraInfo(msg)
         self.frame_id = msg.header.frame_id
         self.is_camera_arrived = True
-        print "OK"
 
     # add circles
     def image_cb(self,msg):
@@ -88,13 +57,47 @@ class PutPointsOnImage(object):
                 img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
             except CvBridgeError as e:
                 rospy.logerr('image_cb failed: {}'.format(e))
-            for item in self.u_v_list:
-                img_circle = cv2.circle(img,(int(item[0]),int(item[1])),10,(255,0,0),-1)
+
+            for i in range(len(self.u_v_list)):
+                if (i < len(self.u_v_list)/2):
+                    color=(0,0,255)
+                else:
+                    color=(255,0,0)
+                img_circle = cv2.circle(img,(int(self.u_v_list[i][0]),int(self.u_v_list[i][1])),10,color,-1)
                 img_msg = self.bridge.cv2_to_imgmsg(img,msg.encoding)
                 self.pub_image.publish(img_msg)
         else:
             self.pub_image.publish(msg)
         # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
+
+    #use service
+    def display(self, req):
+        rospy.logdebug("in display")
+
+        if not self.is_camera_arrived:
+            return
+        try:
+            # transform = self.tf_buffer.lookup_transform(self.frame_id, self.header_frame_id, rospy.Time(0), rospy.Duration(1.0))
+            transform = self.tf_buffer.lookup_transform(self.frame_id, req.frame_id.data, rospy.Time(0), rospy.Duration(1.0)) #lleg_end_coords was noting,then use BODY frame
+        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+            rospy.logerr('lookup_transform failed: {}'.format(e))
+            return
+        self.flag=True
+        u_v_list_tmp = []
+        points_list=req.l_points + req.r_points
+        for i in range (len(points_list)):
+            pose_stamped = PoseStamped()
+            pose_stamped.pose.position.x = points_list[i].x * 0.001
+            pose_stamped.pose.position.y = points_list[i].y * 0.001
+            pose_stamped.pose.position.z = points_list[i].z * 0.001
+            
+            position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
+            pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
+            u, v = self.cameramodels.project3dToPixel(pub_point)
+            rospy.logdebug("u, v : {}, {}".format(u, v))
+            u_v_list_tmp.append([u,v])
+        self.u_v_list = u_v_list_tmp
+        print ("u_v_list_tmp={}".format(u_v_list_tmp))
         
     def point_stamped_cb(self, msg):
         if not self.is_camera_arrived:
@@ -144,35 +147,9 @@ class PutPointsOnImage(object):
             rospy.logdebug("u, v : {}, {}".format(u, v))
             u_v_list_tmp.append([u,v])
         self.u_v_list = u_v_list_tmp
-
-    # def polygon_cb(self, msg):
-    #     if not self.is_camera_arrived:
-    #         return
-        
-    #     try:
-    #         transform = self.tf_buffer.lookup_transform(self.frame_id, msg.header.frame_id, rospy.Time(0), rospy.Duration(1.0))
-    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-    #         rospy.logerr('lookup_transform failed: {}'.format(e))
-    #         return
-    #     u_v_list_tmp = []
-    #     for i in range (len(msg.polygon.points)):
-    #         msg.polygon.points[i].x
-    #         lis.append()
-    #         pose_stamped = PoseStamped()
-    #         pose_stamped.pose.position.x = msg.points[i].x
-    #         pose_stamped.pose.position.y = msg.points[i].y
-    #         pose_stamped.pose.position.z = msg.points[i].z
-            
-    #         position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
-    #         pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
-    #         u, v = self.cameramodels.project3dToPixel(pub_point)
-    #         rospy.logdebug("u, v : {}, {}".format(u, v))
-    #         u_v_list_tmp.append([u,v])
-    #     self.u_v_list = u_v_list
         
 if __name__ == '__main__':
     print("OK")
     rospy.init_node("PutPointsOnImage")
     PutPointsOnImage_obj = PutPointsOnImage()
-    # s=rospy.Service("display_grasp_candidates", GraspCandidates,PutPointsOnImage_obj.display)
     rospy.spin()

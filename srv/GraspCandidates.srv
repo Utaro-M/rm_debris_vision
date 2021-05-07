@@ -1,3 +1,4 @@
 geometry_msgs/Point32[] l_points
 geometry_msgs/Point32[] r_points
+std_msgs/String frame_id
 ---
