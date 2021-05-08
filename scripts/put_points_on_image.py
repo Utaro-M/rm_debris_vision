@@ -50,7 +50,7 @@ class PutPointsOnImage(object):
         self.mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],2,10)
         self.mf.registerCallback(self.joy_cb)
 
-        self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.display) #use service
+        self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
         # rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
         # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
                 
@@ -59,19 +59,17 @@ class PutPointsOnImage(object):
         self.frame_id = msg.header.frame_id
         self.is_camera_arrived = True
 
-    # Trigger, Trackpad X, Trackpad Y
-    # axes: [0.0, 0.0, 0.0]
-    # Trigger, Trackpad touched, Trackpad pressed, Menu, Gripper
-    # buttons: [0, 0, 0, 0, 0]
+    # detect button and change state
+    # state :: sleep -> button input (change mode)-> waiting (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def joy_cb(self,left_msg,right_msg):
         if (self.state == "sleep"):
-            if left_msg.buttons[4]==1 and right_msg.buttons[4]==1:
+            if left_msg.buttons[4]==1 and right_msg.buttons[4]==1: # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
                 self.send_trigger(True,self.hands_interval)
                 self.state = "waiting"
         elif(self.state == "waiting"):
-            if left_msg.buttons[3]==1:
+            if left_msg.buttons[3]==1:  # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor +=1
-            elif right_msg.buttons[3]==1:
+            elif right_msg.buttons[3]==1: # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor -=1
             if(self.cursor < 0):
                 self.cursor = 0
@@ -79,10 +77,11 @@ class PutPointsOnImage(object):
             if(len(self.u_v_list)/2 <= self.cursor):
                 self.cursor = len(self.u_v_list)/2 -1
                 # self.cursor = 0
-            if left_msg.buttons[0]==1 and right_msg.buttons[0]==1:
+            if left_msg.buttons[0]==1 and right_msg.buttons[0]==1: # buttons: [1, 0, 0, 0, 0] and [1, 0, 0, 0, 0] state: waiting -> sleep
                 self.send_trigger(False,[self.cursor])
-                self.state = "choosed"
+                self.state = "sleep"
 
+    # request candidates info or request solve ik and move robot
     def send_trigger(self,flag,data):
         rospy.wait_for_service('joy_trigger')
         try:
@@ -91,7 +90,8 @@ class PutPointsOnImage(object):
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
-    # add circles
+    # when state==waiting : add circles to image and publish it
+    # when state == otherwise : only publish original image
     def image_cb(self,msg):
         self.header_frame_id = msg.header.frame_id
         if self.state == "waiting" :
@@ -118,9 +118,8 @@ class PutPointsOnImage(object):
         # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
 
     #use service
-    def display(self, req):
-        rospy.logdebug("in display")
-
+    def transform(self, req):
+        rospy.logdebug("in transform")
         if not self.is_camera_arrived:
             return
         try:
@@ -200,3 +199,14 @@ if __name__ == '__main__':
     rospy.init_node("PutPointsOnImage")
     PutPointsOnImage_obj = PutPointsOnImage()
     rospy.spin()
+
+# information of Joy topic  from  vive
+# Trigger, Trackpad X, Trackpad Y
+# axes: [0.0, 0.0, 0.0]
+# Trigger, Trackpad touched, Trackpad pressed, Menu, Gripper
+# buttons: [0, 0, 0, 0, 0]
+
+# execute
+# roslaunch put_points_on_image.launch
+# rostopic pub -r 5 vive_left sensor_msgs/Joy '{header: {stamp: 'now', frame_id: 'HEAD_LINK0'}, axes: [0, 0, 0], buttons:[1, 0, 0, 0,0]}'
+# rostopic pub -r 5 vive_right sensor_msgs/Joy '{header: {stamp: 'now', frame_id: 'HEAD_LINK0'}, axes: [0, 0, 0], buttons:[1, 0, 0, 0,0]}'
