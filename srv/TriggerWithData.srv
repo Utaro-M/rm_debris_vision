@@ -1,0 +1,4 @@
+bool flag
+int32[] data
+---
+bool res

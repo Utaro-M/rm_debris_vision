@@ -69,6 +69,7 @@ add_service_files(
   PredK.srv
   CPthre.srv
   GraspCandidates.srv
+  TriggerWithData.srv
 )
 
 ## Generate actions in the 'action' folder
