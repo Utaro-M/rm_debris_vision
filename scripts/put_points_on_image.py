@@ -63,13 +63,13 @@ class PutPointsOnImage(object):
     # state :: sleep -> button input (change mode)-> waiting (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def joy_cb(self,left_msg,right_msg):
         if (self.state == "sleep"):
-            if left_msg.buttons[4]==1 and right_msg.buttons[4]==1: # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
+            if left_msg.buttons[3]==1 and right_msg.buttons[3]==1: # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
                 self.send_trigger(True,self.hands_interval)
                 self.state = "waiting"
         elif(self.state == "waiting"):
-            if left_msg.buttons[3]==1:  # buttons: [0, 0, 0, 1, 0] :: change candidates
+            if left_msg.buttons[2]==1:  # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor +=1
-            elif right_msg.buttons[3]==1: # buttons: [0, 0, 0, 1, 0] :: change candidates
+            elif right_msg.buttons[2]==1: # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor -=1
             if(self.cursor < 0):
                 self.cursor = 0
