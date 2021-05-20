@@ -70,6 +70,7 @@ add_service_files(
   CPthre.srv
   GraspCandidates.srv
   TriggerWithData.srv
+  TriggerWithString.srv  
 )
 
 ## Generate actions in the 'action' folder
