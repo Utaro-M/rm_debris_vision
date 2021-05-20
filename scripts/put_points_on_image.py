@@ -36,7 +36,8 @@ class PutPointsOnImage(object):
         self.header_frame_id=""
         self.hands_interval=[100,300,500]
         self.cursor=0
-        
+        self.left_flag_count =[0, 0, 0, 0, 0]
+        self.right_flag_count =[0, 0, 0, 0, 0]
         # publish
         self.pub_point_stamped = rospy.Publisher("~output", PointStamped, queue_size=1)
         self.pub_image = rospy.Publisher("~output/image", Image, queue_size=1)
@@ -53,7 +54,7 @@ class PutPointsOnImage(object):
         self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
         # rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
         # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
-                
+        
     def camera_info_cb(self, msg):
         self.cameramodels.fromCameraInfo(msg)
         self.frame_id = msg.header.frame_id
@@ -62,14 +63,28 @@ class PutPointsOnImage(object):
     # detect button and change state
     # state :: sleep -> button input (change mode)-> waiting (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def joy_cb(self,left_msg,right_msg):
+        self.set_button_state(left_msg,right_msg)
+        
         if (self.state == "sleep"):
-            if left_msg.buttons[3]==1 and right_msg.buttons[3]==1: # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
+            if self.pushed(left,3) and self.pushed(right,3): # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
                 self.send_trigger(True,self.hands_interval)
                 self.state = "waiting"
+            if self.pushed(left,2) and self.pushed(right,2):
+                self.send_trigger(True,'auto_ik_trigger') #first: set start pos
+                self.state = "getting_ref"
+        elif(self.state == "getting_ref"):
+            if self.pushed(left,0): #reset
+                self.state = "sleep"
+            if self.pushed(left,2) and self.pushed(right,2):
+                self.send_trigger(True,'auto_ik_trigger') #second: set goal pos
+                self.state = "sleep"
+
         elif(self.state == "waiting"):
-            if left_msg.buttons[2]==1:  # buttons: [0, 0, 0, 1, 0] :: change candidates
+            if self.pushed(left,0): #reset
+                self.state = "sleep"
+            if self.pushed(left,2):  # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor +=1
-            elif right_msg.buttons[2]==1: # buttons: [0, 0, 0, 1, 0] :: change candidates
+            elif self.pushed(right,2): # buttons: [0, 0, 0, 1, 0] :: change candidates
                 self.cursor -=1
             if(self.cursor < 0):
                 self.cursor = 0
@@ -77,15 +92,45 @@ class PutPointsOnImage(object):
             if(len(self.u_v_list)/2 <= self.cursor):
                 self.cursor = len(self.u_v_list)/2 -1
                 # self.cursor = 0
-            if left_msg.buttons[0]==1 and right_msg.buttons[0]==1: # buttons: [1, 0, 0, 0, 0] and [1, 0, 0, 0, 0] state: waiting -> sleep
+                
+            if self.pushed(left,3) and self.pushed(right,3): # buttons: [1, 0, 0, 0, 0] and [1, 0, 0, 0, 0] state: waiting -> sleep
                 self.send_trigger(False,[self.cursor])
                 self.state = "sleep"
+            
 
+        rospy.wait_for_service('auto_ik_trigger')
+            
+    def set_button_state(self,left,right):
+        for i in range (len(left_msg.buttons)):
+            if left_msg.buttons[i]==1:
+                self.left_flag_count[i] += 1
+            else:
+                self.left_flag_count[i] = 0
+                
+            if right_msg.buttons[i]==1:
+                self.right_flag_count[i] += 1
+            else:
+                self.right_flag_count[i] = 0
+                
+    def pushed(self,hand,button_num,thre=None):
+        if (not thre):
+            thre=self.count_threshould
+        if(hand =="left"):
+            if self.left_flag_count[button_num] > thre:
+                return True
+            else:
+                return False
+        else:
+            if self.right_flag_count[button_num] > thre:
+                return True
+            else:
+                return False
+            
     # request candidates info or request solve ik and move robot
-    def send_trigger(self,flag,data):
-        rospy.wait_for_service('joy_trigger')
+    def send_trigger(self,flag,data,svc_name='joy_trigger'):
+        rospy.wait_for_service(svc_name)
         try:
-            Trigger_with_data = rospy.ServiceProxy('joy_trigger', TriggerWithData)
+            Trigger_with_data = rospy.ServiceProxy(svc_name, TriggerWithData)
             resp1 = Trigger_with_data(flag,data)
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
