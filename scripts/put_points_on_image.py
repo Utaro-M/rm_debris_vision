@@ -17,6 +17,9 @@ from geometry_msgs.msg import PoseStamped
 from image_geometry import PinholeCameraModel
 from rm_debris_vision.srv import GraspCandidates
 from rm_debris_vision.srv import TriggerWithData
+from rm_debris_vision.srv import TriggerWithString
+
+use="eus"
 
 class PutPointsOnImage(object):
     def __init__(self):
@@ -36,6 +39,7 @@ class PutPointsOnImage(object):
         self.header_frame_id=""
         self.hands_interval=[100,300,500]
         self.cursor=0
+        self.count_threshould=5
         self.left_flag_count =[0, 0, 0, 0, 0]
         self.right_flag_count =[0, 0, 0, 0, 0]
         # publish
@@ -48,12 +52,16 @@ class PutPointsOnImage(object):
         #Joy
         sub1 = message_filters.Subscriber('~vive_left', Joy)
         sub2 = message_filters.Subscriber('~vive_right', Joy)
-        self.mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],2,10)
+        self.mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],2,30)
         self.mf.registerCallback(self.joy_cb)
 
-        self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
+        if use =="eus":
+            self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
+        elif use =="pca":
+            rospy.Subscriber("~input/pose_array", PoseArray, self.pca_cb) #subscribe points
         # rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
         # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
+        rospy.wait_for_service('joy_trigger')
         
     def camera_info_cb(self, msg):
         self.cameramodels.fromCameraInfo(msg)
@@ -61,46 +69,45 @@ class PutPointsOnImage(object):
         self.is_camera_arrived = True
 
     # detect button and change state
-    # state :: sleep -> button input (change mode)-> waiting (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
+    # state :: sleep -> button input (change mode)-> choosing (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def joy_cb(self,left_msg,right_msg):
+        # print("in joy_cb")
         self.set_button_state(left_msg,right_msg)
-        
-        if (self.state == "sleep"):
-            if self.pushed(left,3) and self.pushed(right,3): # buttons: [0, 0, 0, 0, 1] and [0, 0, 0, 0, 1] state: sleep -> waiting
-                self.send_trigger(True,self.hands_interval)
-                self.state = "waiting"
-            if self.pushed(left,2) and self.pushed(right,2):
-                self.send_trigger(True,'auto_ik_trigger') #first: set start pos
-                self.state = "getting_ref"
-        elif(self.state == "getting_ref"):
-            if self.pushed(left,0): #reset
-                self.state = "sleep"
-            if self.pushed(left,2) and self.pushed(right,2):
-                self.send_trigger(True,'auto_ik_trigger') #second: set goal pos
-                self.state = "sleep"
+        if self.pushed("left",0): #reset
+            self.state = "sleep"
 
-        elif(self.state == "waiting"):
-            if self.pushed(left,0): #reset
-                self.state = "sleep"
-            if self.pushed(left,2):  # buttons: [0, 0, 0, 1, 0] :: change candidates
+        if (self.state == "sleep"):
+            if self.pushed("left",3) and self.pushed("right",3): #  state: sleep -> choosing
+                self.send_trigger("get_candidates",self.hands_interval)
+                self.state = "choosing"
+            if self.pushed("left",2) and self.pushed("right",2):
+                self.send_trigger("set_startpos",None) #first: set start pos
+                self.state = "auto_move"
+
+        elif(self.state == "choosing"):
+            if self.pushed("left",2):  # :: change candidates
                 self.cursor +=1
-            elif self.pushed(right,2): # buttons: [0, 0, 0, 1, 0] :: change candidates
+            elif self.pushed("right",2): #:: change candidates
                 self.cursor -=1
             if(self.cursor < 0):
                 self.cursor = 0
                 # self.cursor = len(self.u_v_list)/2 -1
             if(len(self.u_v_list)/2 <= self.cursor):
                 self.cursor = len(self.u_v_list)/2 -1
-                # self.cursor = 0
-                
-            if self.pushed(left,3) and self.pushed(right,3): # buttons: [1, 0, 0, 0, 0] and [1, 0, 0, 0, 0] state: waiting -> sleep
+                # self.cursor = 0                
+            if self.pushed("left",3) and self.pushed("right",3): #  state: choosing -> sleep
                 self.send_trigger(False,[self.cursor])
                 self.state = "sleep"
-            
 
-        rospy.wait_for_service('auto_ik_trigger')
+        elif(self.state == "auto_move"):
+            if self.pushed("left",2) and self.pushed("right",2):
+                self.send_trigger("set_goalpos",None) #second: set goal pos
+                self.state = "sleep"
+        print("state = {}".format(self.state))
+        # rospy.wait_for_service('auto_ik_trigger')
             
-    def set_button_state(self,left,right):
+    def set_button_state(self,left_msg,right_msg):
+        # print("in set_button_state")
         for i in range (len(left_msg.buttons)):
             if left_msg.buttons[i]==1:
                 self.left_flag_count[i] += 1
@@ -127,19 +134,19 @@ class PutPointsOnImage(object):
                 return False
             
     # request candidates info or request solve ik and move robot
-    def send_trigger(self,flag,data,svc_name='joy_trigger'):
-        rospy.wait_for_service(svc_name)
+    def send_trigger(self,function,data):
+        # rospy.wait_for_service(svc_name)
         try:
-            Trigger_with_data = rospy.ServiceProxy(svc_name, TriggerWithData)
-            resp1 = Trigger_with_data(flag,data)
+            Trigger_with_string = rospy.ServiceProxy('joy_trigger', TriggerWithString)
+            resp1 = Trigger_with_string(function,data)
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
-    # when state==waiting : add circles to image and publish it
+    # when state==choosing : add circles to image and publish it
     # when state == otherwise : only publish original image
     def image_cb(self,msg):
         self.header_frame_id = msg.header.frame_id
-        if self.state == "waiting" :
+        if self.state == "choosing" :
             print "in image_cb"
             try:
                 img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
@@ -189,48 +196,25 @@ class PutPointsOnImage(object):
             u_v_list_tmp.append([u,v])
         self.u_v_list = u_v_list_tmp
         print ("u_v_list_tmp={}".format(u_v_list_tmp))
-        
-    def point_stamped_cb(self, msg):
-        if not self.is_camera_arrived:
-            return
-        pose_stamped = PoseStamped()
-        pose_stamped.pose.position.x = msg.point.x
-        pose_stamped.pose.position.y = msg.point.y
-        pose_stamped.pose.position.z = msg.point.z
-        try:
-            transform = self.tf_buffer.lookup_transform(self.frame_id, msg.header.frame_id, rospy.Time(0), rospy.Duration(1.0))
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logerr('lookup_transform failed: {}'.format(e))
-            return
-        position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
-        pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
-        self.u, self.v = self.cameramodels.project3dToPixel(pub_point)
-        rospy.logdebug("u, v : {}, {}".format(self.u, self.v))
-        
-        # img1 = self.bridge.imgmsg_to_cv2(msg2,msg1.encoding)
-        # pub_msg = PointStamped()
-        # pub_msg.header = msg.header
-        # pub_msg.header.frame_id = self.frame_id
-        # pub_msg.point.x = u
-        # pub_msg.point.y = v
-        # pub_msg.point.z = 0
-        # self.pub.publish(pub_msg)
 
-    def polygon_stamped_cb(self, msg):
+    def transform_pca(self):
+        rospy.logdebug("in transform")
         if not self.is_camera_arrived:
             return
-        
         try:
-            transform = self.tf_buffer.lookup_transform(self.frame_id, msg.header.frame_id, rospy.Time(0), rospy.Duration(1.0))
+            # transform = self.tf_buffer.lookup_transform(self.frame_id, self.header_frame_id, rospy.Time(0), rospy.Duration(1.0))
+            transform = self.tf_buffer.lookup_transform(self.frame_id, req.frame_id.data, rospy.Time(0), rospy.Duration(1.0)) #lleg_end_coords was noting,then use BODY frame
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logerr('lookup_transform failed: {}'.format(e))
             return
+        self.flag=True
         u_v_list_tmp = []
-        for i in range (len(msg.polygon.points)):
+        points_list=l_points + req.r_points
+        for i in range (len(points_list)):
             pose_stamped = PoseStamped()
-            pose_stamped.pose.position.x = msg.polygon.points[i].x
-            pose_stamped.pose.position.y = msg.polygon.points[i].y
-            pose_stamped.pose.position.z = msg.polygon.points[i].z
+            pose_stamped.pose.position.x = points_list[i].x * 0.001
+            pose_stamped.pose.position.y = points_list[i].y * 0.001
+            pose_stamped.pose.position.z = points_list[i].z * 0.001
             
             position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
             pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
@@ -238,6 +222,13 @@ class PutPointsOnImage(object):
             rospy.logdebug("u, v : {}, {}".format(u, v))
             u_v_list_tmp.append([u,v])
         self.u_v_list = u_v_list_tmp
+        print ("u_v_list_tmp={}".format(u_v_list_tmp))
+        
+    def pca_cb(self, msg):
+        points_list = []
+        for poses in msg.poses:
+            points_list.append([poses[i].x, poses[i].y, poses[i].z])
+        
         
 if __name__ == '__main__':
     print("OK")

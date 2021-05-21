@@ -16,9 +16,12 @@
   <!--       pkg="rostopic" type="rostopic" -->
   <!--       args="pub -r 10 reference_polygon_publisher/output geometry_msgs/PolygonStamped -->
   <!--             '{header: {stamp: 'now', frame_id: 'HEAD_LINK0'}, polygon: {points: [{x: 500, y: 100, z: 100}, {x: 500, y: 500, z: 100}]}}'"/>  -->
-  
+
+  <!-- <node name="motion_with_vive" -->
+  <!--       pkg="rm_debris_vision" type="motion_with_vive.l" output="screen"/> -->
+
   <node name="put_points_on_image"
-        pkg="rm_debris_vision" type="put_points_on_image.py">
+        pkg="rm_debris_vision" type="put_points_on_image.py" output="screen">
     <remap from="~input/camera_info" to="/multisense_local/left/camera_info" />
     <!-- <remap from="~input/point_stamped" to="reference_point_publisher/output" /> -->
     <remap from="~input/polygon_stamped" to="reference_polygon_publisher/output" />
@@ -26,11 +29,9 @@
     <remap from="~input/image" to="/multisense_local/left/image_rect_color" />
     <!-- <remap from="~vive_left" to="/vive_left" /> -->
     <!-- <remap from="~vive_right" to="/vive_right" /> -->
-
     <!-- tablis jikki -->
     <remap from="~vive_left" to="/vive_lh_joy" />
     <remap from="~vive_right" to="/vive_rh_joy" />    
-    
   </node>
 
 </launch>
