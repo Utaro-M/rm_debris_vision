@@ -30,11 +30,7 @@ class PutPointsOnImage(object):
         self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0))
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
         self.bridge = CvBridge()
-
         self.state = "sleep"
-        self.flag=False
-        self.u = 0
-        self.v = 0
         self.u_v_list = []
         self.header_frame_id=""
         self.hands_interval=[100,300,500]
@@ -103,9 +99,37 @@ class PutPointsOnImage(object):
             if self.pushed("left",2) and self.pushed("right",2):
                 self.send_trigger("set_goalpos",None) #second: set goal pos
                 self.state = "sleep"
+                
         print("state = {}".format(self.state))
         # rospy.wait_for_service('auto_ik_trigger')
-            
+
+    # when state==choosing : add circles to image and publish it
+    # when state == otherwise : only publish original image
+    def image_cb(self,msg):
+        self.header_frame_id = msg.header.frame_id
+        if self.state == "choosing" :
+            print "in image_cb"
+            try:
+                img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
+            except CvBridgeError as e:
+                rospy.logerr('image_cb failed: {}'.format(e))
+
+            for i in range(len(self.u_v_list)):
+                if (i < len(self.u_v_list)/2):
+                    color=(0,0,255)
+                else:
+                    color=(255,0,0)
+                if (i == self.cursor or i == self.cursor + len(self.u_v_list)/2):
+                    size=16
+                else:
+                    size=10
+                img_circle = cv2.circle(img,(int(self.u_v_list[i][0]),int(self.u_v_list[i][1])),size,color,-1)
+                img_msg = self.bridge.cv2_to_imgmsg(img,msg.encoding)
+                self.pub_image.publish(img_msg)
+        else:
+            self.pub_image.publish(msg)
+        # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
+        
     def set_button_state(self,left_msg,right_msg):
         # print("in set_button_state")
         for i in range (len(left_msg.buttons)):
@@ -142,33 +166,6 @@ class PutPointsOnImage(object):
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
-    # when state==choosing : add circles to image and publish it
-    # when state == otherwise : only publish original image
-    def image_cb(self,msg):
-        self.header_frame_id = msg.header.frame_id
-        if self.state == "choosing" :
-            print "in image_cb"
-            try:
-                img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
-            except CvBridgeError as e:
-                rospy.logerr('image_cb failed: {}'.format(e))
-
-            for i in range(len(self.u_v_list)):
-                if (i < len(self.u_v_list)/2):
-                    color=(0,0,255)
-                else:
-                    color=(255,0,0)
-                if (i == self.cursor or i == self.cursor + len(self.u_v_list)/2):
-                    size=16
-                else:
-                    size=10
-                img_circle = cv2.circle(img,(int(self.u_v_list[i][0]),int(self.u_v_list[i][1])),size,color,-1)
-                img_msg = self.bridge.cv2_to_imgmsg(img,msg.encoding)
-                self.pub_image.publish(img_msg)
-        else:
-            self.pub_image.publish(msg)
-        # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
-
     #use service
     def transform(self, req):
         rospy.logdebug("in transform")
@@ -180,7 +177,7 @@ class PutPointsOnImage(object):
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logerr('lookup_transform failed: {}'.format(e))
             return
-        self.flag=True
+        
         u_v_list_tmp = []
         points_list=req.l_points + req.r_points
         for i in range (len(points_list)):
@@ -198,7 +195,7 @@ class PutPointsOnImage(object):
         print ("u_v_list_tmp={}".format(u_v_list_tmp))
 
     def transform_pca(self):
-        rospy.logdebug("in transform")
+        rospy.logdebug("in transform pca")
         if not self.is_camera_arrived:
             return
         try:
@@ -207,7 +204,6 @@ class PutPointsOnImage(object):
         except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
             rospy.logerr('lookup_transform failed: {}'.format(e))
             return
-        self.flag=True
         u_v_list_tmp = []
         points_list=l_points + req.r_points
         for i in range (len(points_list)):
@@ -228,7 +224,6 @@ class PutPointsOnImage(object):
         points_list = []
         for poses in msg.poses:
             points_list.append([poses[i].x, poses[i].y, poses[i].z])
-        
         
 if __name__ == '__main__':
     print("OK")
