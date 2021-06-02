@@ -72,6 +72,7 @@
         
         ((equal "reach_candidates" (send req :function))
          (progn ;;  solve ik
+           (format t "reach candidates~%")
            (format t "req = ~A~%" (elt (send req :data) 0))
            (setq coords-list (list (elt (elt candidates-coords-list (elt (send req :data) 0)) 0) (elt (elt candidates-coords-list (elt (send req :data) 0)) 1)))
            (format t "coords-list = ~A~% " coords-list)
@@ -87,6 +88,7 @@
         
         ((equal "set_startpos" (send req :function))
          (progn
+           (format t "set start pos~%")
            (if (not debug)
                (stop-master-slave))
            (setq start-coords-list (get-coords "slave")))
@@ -94,6 +96,7 @@
         
         ((equal "set_goalpos" (send req :function))
          (progn
+           (format t "set goal pos~%")
            (setq goal-coords-list (get-coords "slave"))
            (send *robot* :angle-vector (send *ri* :state :angle-vector))
            (setq diff-list (list))
@@ -129,7 +132,7 @@
   )
 
 ;; general ik
-(defun ik(rarm larm)
+(defun ik(larm rarm)
   (send *robot* :fullbody-inverse-kinematics
         (list (send *robot* :rleg :end-coords :copy-worldcoords)
               (send *robot* :lleg :end-coords :copy-worldcoords)

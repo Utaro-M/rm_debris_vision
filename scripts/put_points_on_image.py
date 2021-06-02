@@ -46,10 +46,12 @@ class PutPointsOnImage(object):
         rospy.Subscriber('~input/camera_info', CameraInfo, self.camera_info_cb)
         rospy.Subscriber("~input/image", Image, self.image_cb)
         #Joy
-        sub1 = message_filters.Subscriber('~vive_left', Joy)
-        sub2 = message_filters.Subscriber('~vive_right', Joy)
-        self.mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],2,30)
-        self.mf.registerCallback(self.joy_cb)
+        # sub1 = message_filters.Subscriber('~vive_left', Joy)
+        # sub2 = message_filters.Subscriber('~vive_right', Joy)
+        # self.mf= message_filters.ApproximateTimeSynchronizer([sub1,sub2],2,300)
+        # self.mf.registerCallback(self.joy_cb)
+        rospy.Subscriber('~vive_left', Joy, self.joy_cb_left)
+        rospy.Subscriber('~vive_right', Joy, self.joy_cb_right)
 
         if use =="eus":
             self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
@@ -66,18 +68,31 @@ class PutPointsOnImage(object):
 
     # detect button and change state
     # state :: sleep -> button input (change mode)-> choosing (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
-    def joy_cb(self,left_msg,right_msg):
-        # print("in joy_cb")
-        self.set_button_state(left_msg,right_msg)
-        if self.pushed("left",0): #reset
-            self.state = "sleep"
+    def joy_cb_left(self,msg):
+        self.set_button_count(msg,"left")
+        print("left count : {}".format(self.left_flag_count))
+        self.change_state()
 
+    def joy_cb_right(self,msg):
+        self.set_button_count(msg,"right")
+        print("right count : {}".format(self.right_flag_count))
+        self.change_state()
+        
+    def change_state(self):
+        if self.pushed("left",0): #reset
+            print("\n       -> sleep\n")
+            self.state = "sleep"
+            self.reset_button_count("left")
+            self.reset_button_count("right")
+            
         if (self.state == "sleep"):
             if self.pushed("left",3) and self.pushed("right",3): #  state: sleep -> choosing
+                print("\nsleep -> choosing\n")
                 self.send_trigger("get_candidates",self.hands_interval)
                 self.state = "choosing"
             if self.pushed("left",2) and self.pushed("right",2):
                 self.send_trigger("set_startpos",None) #first: set start pos
+                print("\nsleep -> suto_move\n")
                 self.state = "auto_move"
 
         elif(self.state == "choosing"):
@@ -90,9 +105,11 @@ class PutPointsOnImage(object):
                 # self.cursor = len(self.u_v_list)/2 -1
             if(len(self.u_v_list)/2 <= self.cursor):
                 self.cursor = len(self.u_v_list)/2 -1
-                # self.cursor = 0                
+                # self.cursor = 0
             if self.pushed("left",3) and self.pushed("right",3): #  state: choosing -> sleep
-                self.send_trigger(False,[self.cursor])
+                # self.send_trigger(False,[self.cursor])
+                self.send_trigger("reach_candidates",[self.cursor])                
+                print("\nchoosing -> sleep\n")
                 self.state = "sleep"
 
         elif(self.state == "auto_move"):
@@ -108,7 +125,6 @@ class PutPointsOnImage(object):
     def image_cb(self,msg):
         self.header_frame_id = msg.header.frame_id
         if self.state == "choosing" :
-            print "in image_cb"
             try:
                 img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
             except CvBridgeError as e:
@@ -131,7 +147,7 @@ class PutPointsOnImage(object):
         # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
         
     def set_button_state(self,left_msg,right_msg):
-        # print("in set_button_state")
+        print("in set_button_state : {}".format(self.left_flag_count))
         for i in range (len(left_msg.buttons)):
             if left_msg.buttons[i]==1:
                 self.left_flag_count[i] += 1
@@ -140,6 +156,26 @@ class PutPointsOnImage(object):
                 
             if right_msg.buttons[i]==1:
                 self.right_flag_count[i] += 1
+            else:
+                self.right_flag_count[i] = 0
+
+    def set_button_count(self,msg,hand):
+        for i in range (len(msg.buttons)):
+            if msg.buttons[i]==1:
+                if hand == "left":
+                    self.left_flag_count[i] += 1
+                else:
+                    self.right_flag_count[i] += 1
+            else:
+                if hand == "left":
+                    self.left_flag_count[i] = 0
+                else:
+                    self.right_flag_count[i] = 0
+
+    def reset_button_count(self,hand):
+        for i in range (5):
+            if hand == "left":
+                self.left_flag_count[i] = 0
             else:
                 self.right_flag_count[i] = 0
                 

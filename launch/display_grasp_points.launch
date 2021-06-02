@@ -1,0 +1,5 @@
+<launch>
+  <!-- just up two launch file -->
+  <include file="$(find rm_debris_vision)/launch/plane_extraction.launch"/>
+  <include file="$(find rm_debris_vision)/launch/put_points_on_image.launch"/>
+</launch>
