@@ -1,0 +1,93 @@
+<launch>
+  <rosparam param="/use_sim_time">true</rosparam>
+  <arg name="input_cloud"
+       default="/multisense_local/organized_image_points2_color" />
+         <!-- default="/rs_l515/depth_registered/points" /> -->
+  <arg name="filtered_cloud"
+       default="/self_filter/filtered_cloud" />
+  <!-- <arg name="SELF_FILTER_PARAM" default="/home/leus/catkin_ws/jaxon_tutorial/src/matsuura_rm_debris/rm_board/models/self_filter_param.yaml"/> -->
+  <arg name="SELF_FILTER_PARAM" default="/home/utaro/research/rm_debris/rm_board/models/self_filter_param_sim.yaml"/>  
+  <arg name="manager" default="plane_extraction_manager" />
+  <!-- <rosparam param="/use_sim_time">true</rosparam> -->
+  <!-- <node pkg="count_points" name="count_points" type="count_points.py" output="screen" /> -->
+  <node pkg="rm_debris_vision" name="count_points" type="count_points.py" output="screen" />
+
+  <node pkg="pr2_navigation_self_filter" type="self_filter"
+        name="self_filter" output="screen">
+    <remap from="cloud_in"  to="$(arg input_cloud)" />
+    <remap from="cloud_out" to="~/filtered_cloud" />
+    <rosparam command="load" file="$(arg SELF_FILTER_PARAM)" />
+  </node>
+  <group ns="in_hand_point">
+
+    <node name="$(arg manager)"
+          pkg="nodelet" type="nodelet"
+          args="manager" output="screen" />
+    
+    <node name="bounding_box_array_publisher_larm"
+          pkg="jsk_recognition_utils" type="bounding_box_array_publisher.py">
+      <rosparam>
+        frame_id: larm_end_coords
+        boxes:
+        - position: [0.05, 0, 0]
+          dimension: [0.2, 0.25, 0.2]
+      </rosparam>
+    </node>
+
+    <node name="attention_clipper_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg filtered_cloud)" />
+      <remap from="~input/box_array" to="bounding_box_array_publisher_larm/output" />
+      <rosparam>
+        use_multiple_attention: true
+      </rosparam>
+    </node>
+
+    <node name="extract_indices_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg filtered_cloud)"/>
+      <remap from="~indices" to="attention_clipper_larm/output/point_indices"/>
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+
+    <node name="bounding_box_array_publisher_rarm"
+          pkg="jsk_recognition_utils" type="bounding_box_array_publisher.py">
+      <rosparam>
+        frame_id: rarm_end_coords
+        boxes:
+        - position: [0.05, 0, 0]
+          dimension: [0.2, 0.25, 0.2]
+      </rosparam>
+    </node>
+
+    <node name="attention_clipper_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg filtered_cloud)" />
+      <remap from="~input/box_array" to="bounding_box_array_publisher_rarm/output" />
+      <rosparam>
+        use_multiple_attention: true
+      </rosparam>
+    </node>
+
+    <node name="extract_indices_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg filtered_cloud)" />
+      <remap from="~indices" to="attention_clipper_rarm/output/point_indices" />
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+
+  </group>
+  
+    <!-- <node name="rviz" -->
+    <!--       pkg="rviz" type="rviz" -->
+    <!--       args="-d /home/utaro/research/rm_debris/rm_board/display/check_in_hand.rviz"/> -->
+
+  </launch>

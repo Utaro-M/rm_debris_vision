@@ -1,0 +1,47 @@
+#!/usr/bin/env roseus
+(ros::load-ros-manifest "rm_debris_vision")
+(ros::roseus "make_plane_for_ik_client")
+(ros::wait-for-service "make_plane")
+(ros::wait-for-service "set_plane_centroid")
+
+(defun make_plane(&key (set-com? t))
+
+  (let ((req (instance rm_debris_vision::PolygonRequest :init)))
+    (setq res (ros::service-call "make_plane" req t))
+    (if (not (send res :pts :polygon :points))
+        (progn ;; (print "can not find any plane")
+          (return-from make_plane nil)))
+;; (while (not (send res :pts :polygon :points))
+;;   (print "can not find any plane")
+;;   (setq res (ros::service-call "make_plane" req t)))
+    ;; (format t "res =~A~%" res )
+
+    (setq coords (make-coords))
+    (setq com-box (make-cube 100 100 100))
+    (send com-box :set-color #f(1 0 0))
+
+    (setq com (float-vector (send (send res :com) :x) (send (send res :com) :y) (send (send res :com) :z)))
+    (setq normal-vec (float-vector (send (send res :normal_vec) :x) (send (send res :normal_vec) :y) (send (send res :normal_vec) :z))) 
+    (setq vertices (mapcar #'(lambda (vertice) (scale 1000 (float-vector (send vertice :x) (send vertice :y) (send vertice :z)))) (send res :pts :polygon :points)))
+    (setq my-plane (make-prism vertices 10))
+    (send my-plane :set-color (scale (/ 1.0 (norm #f(116 80 48))) #f(116 80 48)))
+    ;; (setq com (scale 1 (send my-plane :centroid)))
+    (send com-box :translate com)
+    ;; (progn (send (send *irtviewer* :viewer) :draw-arrow (v+ com #f(0 0 0)) (v+ com normal-vec) :color #f(0 0 1)) (send *irtviewer* :viewer :flush))
+    ;; (setq normal-line (make-line #f(0 0 0) (scale 500 normal-vec)))
+    (setq normal-line (make-line (v+ com #f(0 0 0)) (v+ com (scale 300 normal-vec))))
+    
+    (objects (list my-plane com-box coords normal-line))
+    (send com-box :translate (scale -1 com))
+    (if set-com?
+        (set_plane_centroid com)
+      (set_plane_centroid #f(0 0 0)))
+    (list my-plane com normal-vec)
+    ))
+
+(defun set_plane_centroid(centroid)
+  (let ((req (instance rm_debris_vision::GetPlaneRequest :init)))
+    (send req :com :x (elt centroid 0))
+    (send req :com :y (elt centroid 1))
+    (send req :com :z (elt centroid 2))
+    (setq res (ros::service-call "set_plane_centroid" req t))))

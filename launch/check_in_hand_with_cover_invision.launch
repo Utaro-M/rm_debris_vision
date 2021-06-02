@@ -1,0 +1,273 @@
+<!-- １．手先の注目領域の点群抽出 -->
+<!-- ２．カメラと手先間の領域の点群抽出 -->
+<!-- ３．手先が視野内にあるかどうかの判定 -->
+<launch>
+  <arg name="sim" default="true"/>
+  
+  <rosparam param="/use_sim_time">"$(arg sim)"</rosparam>
+  <arg name="input_cloud"
+       default="/multisense_local/organized_image_points2_color" if="$(arg sim)"/>
+  <arg name="input_cloud"
+       default="/rs_l515/depth_registered/points" unless="$(arg sim)"/>
+  <arg name="camera_info"
+       default="/multisense_local/left/camera_info" />
+  <arg name="SELF_FILTER_PARAM"
+       default="/home/utaro/research/rm_debris/rm_board/models/self_filter_param_sim.yaml" if="$(arg sim)"/>
+  <arg name="SELF_FILTER_PARAM"
+       default="/home/leus/catkin_ws/jaxon_tutorial/src/matsuura_rm_debris/rm_board/models/self_filter_param.yaml" unless="$(arg sim)"/> 
+  <arg name="MASK_IMAGE_LARM_PARAM"
+       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_larm_param_sim.yaml" if="$(arg sim)"/>
+  <arg name="MASK_IMAGE_LARM_PARAM"
+       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_larm_param.yaml" unless="$(arg sim)"/>  
+  <arg name="MASK_IMAGE_RARM_PARAM"
+       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_rarm_param_sim.yaml" if="$(arg sim)"/>
+  <arg name="MASK_IMAGE_RARM_PARAM"
+       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_rarm_param.yaml" unless="$(arg sim)"/>  
+
+  <arg name="filtered_cloud"
+       default="/self_filter/filtered_cloud" />
+  <arg name="manager"
+       default="plane_extraction_manager" />
+
+  
+  <node pkg="rm_debris_vision" name="count_points" type="count_points.py" output="screen" />
+  <node pkg="rm_debris_vision" name="change_clip_area_server" type="change_clip_area_server.l" output="screen" />  
+  <!-- <node pkg="rm_debris_vision" name="change_clip_box" type="change_clip_box_server.l" output="screen" /> -->
+
+  <!-- self filter -->
+  <node pkg="pr2_navigation_self_filter" type="self_filter"
+        name="self_filter" output="screen">
+    <remap from="cloud_in"  to="$(arg input_cloud)" />
+    <remap from="cloud_out" to="~/filtered_cloud" />
+    <rosparam command="load" file="$(arg SELF_FILTER_PARAM)" />
+  </node>
+
+  <!-- 手先の注目領域の点群 -->
+  <group ns="in_hand_point">
+    <node name="$(arg manager)"
+          pkg="nodelet" type="nodelet"
+          args="manager" output="screen" />
+
+    
+    <!-- rarm -->
+    <!-- <node name="bounding_box_array_publisher_rarm" -->
+    <!--       pkg="jsk_recognition_utils" type="bounding_box_array_publisher.py"> -->
+    <!--   <rosparam> -->
+    <!--     frame_id: rarm_end_coords -->
+    <!--     boxes: -->
+    <!--     - position: [0.05, 0, 0] -->
+    <!--       dimension: [0.2, 0.25, 0.2] -->
+    <!--   </rosparam> -->
+    <!-- </node> -->
+
+    <node name="bounding_box_publisher_rarm"
+          pkg="topic_publisher" type="pub_box.py">
+      <rosparam>
+        frame_id: rarm_end_coords
+        <!-- x: 0.05 -->
+        <!-- x: 0.1  -->
+        x: 0.08
+        y: 0
+        z: 0
+        <!-- w: 0.2 -->
+        <!-- d: 0.2 -->
+        w: 0.15        
+        d: 0.15
+        h: 0.25
+        <!-- h: 0.2        -->
+      </rosparam>
+    </node>
+    
+    <node name="attention_clipper_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg filtered_cloud)" />
+      <!-- <remap from="~input/box_array" to="bounding_box_array_publisher_rarm/output" /> -->
+      <remap from="~input/box" to="bounding_box_publisher_rarm/output" />
+      <rosparam>
+        use_multiple_attention: false <!-- true -->
+      </rosparam>
+    </node>
+
+    <node name="extract_indices_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg filtered_cloud)" />
+      <remap from="~indices" to="attention_clipper_rarm/output/point_indices" />
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+
+    
+    <!-- larm -->
+    <!-- <node name="bounding_box_array_publisher_larm" -->
+    <!--       pkg="jsk_recognition_utils" type="bounding_box_array_publisher.py"> -->
+    <!--   <rosparam> -->
+    <!--     frame_id: larm_end_coords -->
+    <!--     boxes: -->
+    <!--     - position: [0.05, 0, 0] -->
+    <!--       dimension: [0.2, 0.25, 0.2] -->
+    <!--   </rosparam> -->
+    <!-- </node> -->
+
+    <node name="bounding_box_publisher_larm"
+          pkg="topic_publisher" type="pub_box.py">
+      <rosparam>
+        frame_id: larm_end_coords
+        <!-- x: 0.05 -->
+        <!-- x: 0.1 -->
+        x: 0.08
+        y: 0
+        z: 0
+        <!-- w: 0.2 -->
+        <!-- d: 0.2 -->
+        w: 0.15        
+        d: 0.15
+        h: 0.25
+        <!-- h: 0.2  -->       
+      </rosparam>
+    </node>
+    
+    <node name="attention_clipper_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg filtered_cloud)" />
+      <!-- <remap from="~input/box_array" to="bounding_box_array_publisher_larm/output" /> -->
+      <remap from="~input/box" to="bounding_box_publisher_larm/output" />
+      <rosparam>
+        use_multiple_attention: false
+      </rosparam>
+    </node>
+
+    <node name="extract_indices_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg filtered_cloud)"/>
+      <remap from="~indices" to="attention_clipper_larm/output/point_indices"/>
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+
+    
+    <!-- 手先とカメラの間の領域の点群を調べて覆われているかどうかの確認 -->
+    <!-- rarm -->
+    <node name="bounding_box_publisher_cover_rarm"
+          pkg="topic_publisher" type="pub_box.py">
+      <rosparam>
+        frame_id: lleg_end_coords
+        x: 1
+        y: 0
+        z: 0
+        w: 3
+        d: 1.5
+        h: 2
+      </rosparam>
+    </node>
+    
+    <node name="attention_clipper_cover_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg input_cloud)" />
+      <!-- <remap from="~input/box_array" to="bounding_box_publisher_cover_rarm/output" /> -->
+      <remap from="~input/box" to="bounding_box_publisher_cover_rarm/output" />      
+      <rosparam>
+        use_multiple_attention: false
+      </rosparam>
+    </node>
+    
+    <node name="extract_indices_cover_rarm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg input_cloud)"/>
+      <remap from="~indices" to="attention_clipper_cover_rarm/output/point_indices"/>
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+
+    
+    <!-- larm -->
+    <node name="bounding_box_publisher_cover_larm"
+          pkg="topic_publisher" type="pub_box.py">
+      <rosparam>
+        frame_id: lleg_end_coords
+        x: 1
+        y: 0
+        z: 0
+        w: 3
+        d: 1.5
+        h: 2
+      </rosparam>
+    </node>
+    
+    <node name="attention_clipper_cover_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/AttentionClipper $(arg manager)">
+      <remap from="~input/points" to="$(arg input_cloud)" />
+      <!-- <remap from="~input/box_array" to="bounding_box_publisher_cover_larm/output" /> -->
+      <remap from="~input/box" to="bounding_box_publisher_cover_larm/output" />
+      <rosparam>
+        use_multiple_attention: false
+      </rosparam>
+    </node>
+
+    <node name="extract_indices_cover_larm"
+          pkg="nodelet" type="nodelet"
+          args="load jsk_pcl/ExtractIndices $(arg manager)">
+      <remap from="~input" to="$(arg input_cloud)"/>
+      <remap from="~indices" to="attention_clipper_cover_larm/output/point_indices"/>
+      <rosparam>
+        keep_organized: true
+      </rosparam>
+    </node>
+  </group>
+
+  
+  <!-- 手先が視野内かどうかの判定 -->
+  <!-- rarm -->
+  <node name="robot_to_mask_image_rarm"
+        pkg="nodelet" type="nodelet"
+        args="standalone jsk_perception/RobotToMaskImage">
+    <!-- args="load jsk_perception/RobotToMaskImage "> -->
+    <remap from="~input/camera_info" to="$(arg camera_info)"/>
+    <rosparam command="load" file="$(arg MASK_IMAGE_RARM_PARAM)" />
+    <rosparam>
+      <!-- robot_description: "JAXON_RED" -->
+      <!-- self_see_links: -->
+      <!-- - name: RARM_FINGER0 -->
+      <!-- - name: RARM_FINGER1 -->
+      <!-- <!-\- jikki -\-> -->
+      <!-- <!-\- - name: R_thk_finger1 -\-> -->
+      <!-- <!-\- - name: R_thk_finger2 -\-> -->
+      <!-- <!-\- - name: R_thk_palm -\-> -->
+      <!-- self_see_default_padding: 0.1 -->
+    </rosparam>
+  </node>
+
+  
+  <!-- larm -->
+  <node name="robot_to_mask_image_larm"
+        pkg="nodelet" type="nodelet"
+        args="standalone jsk_perception/RobotToMaskImage">
+    <remap from="~input/camera_info" to="$(arg camera_info)"/>
+    <rosparam command="load" file="$(arg MASK_IMAGE_LARM_PARAM)" />
+    <!-- <rosparam> -->
+    <!--   robot_description: "JAXON_RED" -->
+    <!--   self_see_links: -->
+    <!--   - name: LARM_FINGER0 -->
+    <!--   - name: LARM_FINGER1 -->
+    <!--   <!-\- jikki -\-> -->
+    <!--   <!-\- - name: L_thk_finger1 -\-> -->
+    <!--   <!-\- - name: L_thk_finger2 -\-> -->
+    <!--   <!-\- - name: L_thk_palm -\-> -->
+    <!--   self_see_default_padding: 0.1 -->
+    <!-- </rosparam> -->
+  </node>  
+  
+    <!-- <node name="rviz" -->
+    <!--       pkg="rviz" type="rviz" -->
+    <!--       args="-d /home/utaro/research/rm_debris/rm_board/display/check_in_hand.rviz"/> -->
+
+  </launch>
