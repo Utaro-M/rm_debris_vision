@@ -27,11 +27,11 @@
     <remap from="~input/polygon_stamped" to="reference_polygon_publisher/output" />
     <!-- <remap from="~input/polygon" to="get_plane/focus_plane" /> -->
     <remap from="~input/image" to="/multisense_local/left/image_rect_color" />
-    <!-- <remap from="~vive_left" to="/vive_left" /> -->
-    <!-- <remap from="~vive_right" to="/vive_right" /> -->
+    <remap from="~vive_left" to="/vive_left" />
+    <remap from="~vive_right" to="/vive_right" />
     <!-- tablis jikki -->
-    <remap from="~vive_left" to="/vive_lh_joy" />
-    <remap from="~vive_right" to="/vive_rh_joy" />    
+    <!-- <remap from="~vive_left" to="/vive_lh_joy" /> -->
+    <!-- <remap from="~vive_right" to="/vive_rh_joy" /> -->
   </node>
 
 </launch>

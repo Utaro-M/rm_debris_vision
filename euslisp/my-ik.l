@@ -1,9 +1,9 @@
 
-(load "~/catkin_ws/jaxon_tutorial/src/jsk_control/eus_qp/optmotiongen/euslisp/sqp-optimization.l")
-(load "~/catkin_ws/jaxon_tutorial/src/jsk_control/eus_qp/optmotiongen/euslisp/instant-configuration-task.l")
-(load "~/catkin_ws/jaxon_tutorial/src/jsk_control/eus_qp/optmotiongen/euslisp/validate-jacobian.l")
+(load "package://eus_qp/optmotiongen/euslisp/sqp-optimization.l")
+(load "package://eus_qp/optmotiongen/euslisp/instant-configuration-task.l")
+(load "package://eus_qp/optmotiongen/euslisp/validate-jacobian.l")
 ;; (require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
-(require "~/catkin_ws/jaxon_tutorial/src/jsk_control/eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
+(require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
 (print "load my-ik.l")
 
 (defun my-ik
