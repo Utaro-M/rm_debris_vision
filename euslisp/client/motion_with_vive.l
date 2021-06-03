@@ -12,7 +12,6 @@
       start-coords-list (list)
       goal-coords-list (list))
 
-
 ;; put_points_on_image.pyへcandidatesを送る hands-intervalは両手の間隔
 (defun send-grasp-candidates(&key (hands-interval (list  100 300 500)))
   (setq req (instance rm_debris_vision::GraspCandidatesRequest :init))
@@ -64,57 +63,62 @@
 
 (defun cb (req)
   (format t "in cb euslisp~%")
-  ;; (if (send req :flag) ;; True: return cnadidates
-  (cond ((equal "get_candidates" (send req :function)) ;;  return cnadidates
-         (progn
-           (format t "get_candidates~%")
-           (send-grasp-candidates :hands-interval (send req :data))))
-        
-        ((equal "reach_candidates" (send req :function))
-         (progn ;;  solve ik
-           (format t "reach candidates~%")
-           (format t "req = ~A~%" (elt (send req :data) 0))
-           (setq coords-list (list (elt (elt candidates-coords-list (elt (send req :data) 0)) 0) (elt (elt candidates-coords-list (elt (send req :data) 0)) 1)))
-           (format t "coords-list = ~A~% " coords-list)
-           (send *robot* :angle-vector (send *ri* :state :angle-vector))
-           (reset-coords)
-           ;; (ik-opt (elt coords-list 0) (elt coords-list 1) :only-kinematics nil  :optimize-torque? nil :fix-contact? 2 :avoid-collision? t :apply-external-force? nil :wait? t :rleg-pos-shift #f(0 0 0) :lleg-pos-shift #f(0 0 0)   :set-unique-kin-scale? t :obst? nil)
-           ;; (send *robot-env* :dissoc-root-virtual)
-           (ik (elt coords-list 0) (elt coords-list 1)) ;; general ik
-           (if (not debug)
-               (stop-master-slave))
-           (send-pose-and-move-on-foot :time 8000 :send? t :fix-contact? 2   :look-at-object? nil)
-           ))
-        
-        ((equal "set_startpos" (send req :function))
-         (progn
-           (format t "set start pos~%")
-           (if (not debug)
-               (stop-master-slave))
-           (setq start-coords-list (get-coords "slave")))
-         )
-        
-        ((equal "set_goalpos" (send req :function))
-         (progn
-           (format t "set goal pos~%")
-           (setq goal-coords-list (get-coords "slave"))
-           (send *robot* :angle-vector (send *ri* :state :angle-vector))
-           (setq diff-list (list))
-           (dotimes (i (length start-coords-list))
-             (progn
-               (setq diff-list (append (list (send (elt start-coords-list i) :transformation (elt goal-coords-list i))) diff-list))
-               ))
-           (reset-coords)
-           (ik (send (send (send *robot* :rarm :end-coords) :copy-worldcoords)  :transform (elt diff-list 0))
-               (send (send (send *robot* :larm :end-coords) :copy-worldcoords)  :transform (elt diff-list 1))) ;; general ik
-           (if (not debug)
-               (stop-master-slave))
-           (send-pose-and-move-on-foot :time 8000 :send? t :fix-contact? 2   :look-at-object? nil))
-           )
-         )
-  (format t "receive trigger_with_data")
-  )
+  (let ((m (send req :response)))
+    (cond ((equal "get_candidates" (send req :function)) ;;  return cnadidates
+           (progn
+             (format t "get_candidates~%")
+             (send-grasp-candidates :hands-interval (send req :data))))
 
+          ((equal "reach_candidates" (send req :function))
+           (progn ;;  solve ik
+             (format t "reach candidates~%")
+             (format t "req = ~A~%" (elt (send req :data) 0))
+             (setq coords-list (list (elt (elt candidates-coords-list (elt (send req :data) 0)) 0) (elt (elt candidates-coords-list (elt (send req :data) 0)) 1)))
+             (format t "coords-list = ~A~% " coords-list)
+             (send *robot* :angle-vector (send *ri* :state :angle-vector))
+             (reset-coords)
+             ;; (ik-opt (elt coords-list 0) (elt coords-list 1) :only-kinematics nil  :optimize-torque? nil :fix-contact? 2 :avoid-collision? t :apply-external-force? nil :wait? t :rleg-pos-shift #f(0 0 0) :lleg-pos-shift #f(0 0 0)   :set-unique-kin-scale? t :obst? nil)
+             ;; (send *robot-env* :dissoc-root-virtual)
+             (if (ik (elt coords-list 0) (elt coords-list 1)) ;; general ik
+                 (send m :res t) ;;ik success
+               (progn
+                 (format t "ik failed~%")
+                 (send m :res nil)
+                 (return-from cb m))) ;;ik fail
+             (if (not debug)
+                 (stop-master-slave))
+             (send-pose-and-move-on-foot :time 8000 :send? t :fix-contact? 2   :look-at-object? nil)
+             ))
+
+          ((equal "set_startpos" (send req :function))
+           (progn
+             (format t "set start pos~%")
+             (if (not debug)
+                 (stop-master-slave))
+             (setq start-coords-list (get-coords "slave")))
+           )
+
+          ((equal "set_goalpos" (send req :function))
+           (progn
+             (format t "set goal pos~%")
+             (setq goal-coords-list (get-coords "slave"))
+             (send *robot* :angle-vector (send *ri* :state :angle-vector))
+             (setq diff-list (list))
+             (dotimes (i (length start-coords-list))
+               (progn
+                 (setq diff-list (append (list (send (elt start-coords-list i) :transformation (elt goal-coords-list i))) diff-list))
+                 ))
+             (reset-coords)
+             (ik (send (send (send *robot* :rarm :end-coords) :copy-worldcoords)  :transform (elt diff-list 0))
+                 (send (send (send *robot* :larm :end-coords) :copy-worldcoords)  :transform (elt diff-list 1))) ;; general ik
+             (if (not debug)
+                 (stop-master-slave))
+             (send-pose-and-move-on-foot :time 8000 :send? t :fix-contact? 2   :look-at-object? nil))
+           )
+          )
+    (format t "receive trigger_with_data")
+    m)
+  )
 ;;rh lh rf lf
 (defun get-coords(slave-or-master)
   (let* ((msg-list (list (one-shot-subscribe  (format nil "/~A_rarm_pose" slave-or-master) geometry_msgs::PoseStamped :timeout 3000)
@@ -133,29 +137,33 @@
 
 ;; general ik
 (defun ik(larm rarm)
-  (send *robot* :fullbody-inverse-kinematics
-        (list (send *robot* :rleg :end-coords :copy-worldcoords)
-              (send *robot* :lleg :end-coords :copy-worldcoords)
-              rarm
-              larm)
-        :move-target
-        (list (send *robot* :rleg :end-coords)
-              (send *robot* :lleg :end-coords)
-              (send *robot* :rarm :end-coords)
-              (send *robot* :larm :end-coords))
-        :link-list
-        (list (send *robot* :link-list (send *robot* :rleg :end-coords :parent))
-              (send *robot* :link-list (send *robot* :lleg :end-coords :parent))
-              (send *robot* :link-list (send *robot* :rarm :end-coords :parent))
-              (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
-        :translation-axis (list t t t t)
-        :rotation-axis (list t t :z :z)
-        :target-centroid-pos (midpoint 0.5
-                                       (send *robot* :rleg :end-coords :worldpos)
-                                       (send *robot* :lleg :end-coords :worldpos))
-        :cog-translation-axis :z)
-  ;; (send *obj* :locate (send *robot* :centroid) :world)
-  (send *irtviewer* :draw-objects))
+  (setq flag
+        (send *robot* :fullbody-inverse-kinematics
+              (list (send *robot* :rleg :end-coords :copy-worldcoords)
+                    (send *robot* :lleg :end-coords :copy-worldcoords)
+                    rarm
+                    larm)
+              :move-target
+              (list (send *robot* :rleg :end-coords)
+                    (send *robot* :lleg :end-coords)
+                    (send *robot* :rarm :end-coords)
+                    (send *robot* :larm :end-coords))
+              :link-list
+              (list (send *robot* :link-list (send *robot* :rleg :end-coords :parent))
+                    (send *robot* :link-list (send *robot* :lleg :end-coords :parent))
+                    (send *robot* :link-list (send *robot* :rarm :end-coords :parent))
+                    (send *robot* :link-list (send *robot* :larm :end-coords :parent)))
+              :translation-axis (list t t t t)
+              :rotation-axis (list t t :z :z)
+              ;; :dump-command :fail-only
+              :warnp nil
+              :target-centroid-pos (midpoint 0.5
+                                             (send *robot* :rleg :end-coords :worldpos)
+                                             (send *robot* :lleg :end-coords :worldpos))
+              :cog-translation-axis :z))
+        ;; (send *obj* :locate (send *robot* :centroid) :world)
+  (send *irtviewer* :draw-objects)
+  flag)
 
 (defun stop-master-slave()
   (send *ri* :angle-vector (send *ri* :state :angle-vector))

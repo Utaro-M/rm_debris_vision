@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import rospy
 import numpy as np
 import message_filters
@@ -16,20 +15,12 @@ from geometry_msgs.msg import Polygon #test
 from geometry_msgs.msg import PoseStamped
 from image_geometry import PinholeCameraModel
 from rm_debris_vision.srv import GraspCandidates
-from rm_debris_vision.srv import TriggerWithData
 from rm_debris_vision.srv import TriggerWithString
 
 use="eus"
 
 class PutPointsOnImage(object):
     def __init__(self):
-        
-        self.cameramodels = PinholeCameraModel()
-        self.is_camera_arrived = False
-        self.frame_id = None
-        self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0))
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
-        self.bridge = CvBridge()
         self.state = "sleep"
         self.u_v_list = []
         self.header_frame_id=""
@@ -38,13 +29,8 @@ class PutPointsOnImage(object):
         self.count_threshould=5
         self.left_flag_count =[0, 0, 0, 0, 0]
         self.right_flag_count =[0, 0, 0, 0, 0]
-        # publish
-        self.pub_point_stamped = rospy.Publisher("~output", PointStamped, queue_size=1)
-        self.pub_image = rospy.Publisher("~output/image", Image, queue_size=1)
-
-        # subscribe
-        rospy.Subscriber('~input/camera_info', CameraInfo, self.camera_info_cb)
-        rospy.Subscriber("~input/image", Image, self.image_cb)
+        self.left_transformer  = DisplayTransformedPoints("~input/image_left",'~input/camera_info_left',"~output/image_left")
+        self.right_transformer = DisplayTransformedPoints("~input/image_right",'~input/camera_info_right',"~output/image_right")
         #Joy
         # sub1 = message_filters.Subscriber('~vive_left', Joy)
         # sub2 = message_filters.Subscriber('~vive_right', Joy)
@@ -57,17 +43,8 @@ class PutPointsOnImage(object):
             self.s=rospy.Service("display_grasp_candidates", GraspCandidates,self.transform) #use service
         elif use =="pca":
             rospy.Subscriber("~input/pose_array", PoseArray, self.pca_cb) #subscribe points
-        # rospy.Subscriber("~input/polygon_stamped", PolygonStamped, self.polygon_stamped_cb) #subscribe points
-        # rospy.Subscriber("~input/point_stamped", PointStamped, self.point_stamped_cb)
         rospy.wait_for_service('joy_trigger')
         
-    def camera_info_cb(self, msg):
-        self.cameramodels.fromCameraInfo(msg)
-        self.frame_id = msg.header.frame_id
-        self.is_camera_arrived = True
-
-    # detect button and change state
-    # state :: sleep -> button input (change mode)-> choosing (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def joy_cb_left(self,msg):
         self.set_button_count(msg,"left")
         print("left count : {}".format(self.left_flag_count))
@@ -77,7 +54,9 @@ class PutPointsOnImage(object):
         self.set_button_count(msg,"right")
         print("right count : {}".format(self.right_flag_count))
         self.change_state()
-        
+
+    # detect button and change state
+    # state :: sleep -> button input (change mode)-> choosing (wait for operator instruction) -> button input (operator chooses target candidates) -> sleep (advertise choosed candidates and request ik solving)
     def change_state(self):
         if self.pushed("left",0): #reset
             print("\n       -> sleep\n")
@@ -118,33 +97,25 @@ class PutPointsOnImage(object):
                 self.state = "sleep"
                 
         print("state = {}".format(self.state))
-        # rospy.wait_for_service('auto_ik_trigger')
 
-    # when state==choosing : add circles to image and publish it
-    # when state == otherwise : only publish original image
-    def image_cb(self,msg):
-        self.header_frame_id = msg.header.frame_id
-        if self.state == "choosing" :
-            try:
-                img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
-            except CvBridgeError as e:
-                rospy.logerr('image_cb failed: {}'.format(e))
+    def set_state(self,state):
+        self.state = state
+        self.left_transformer.state = state
+        self.right_transformer.state = state
+        print("\nset state -> {}\n".format(state))
 
-            for i in range(len(self.u_v_list)):
-                if (i < len(self.u_v_list)/2):
-                    color=(0,0,255)
-                else:
-                    color=(255,0,0)
-                if (i == self.cursor or i == self.cursor + len(self.u_v_list)/2):
-                    size=16
-                else:
-                    size=10
-                img_circle = cv2.circle(img,(int(self.u_v_list[i][0]),int(self.u_v_list[i][1])),size,color,-1)
-                img_msg = self.bridge.cv2_to_imgmsg(img,msg.encoding)
-                self.pub_image.publish(img_msg)
-        else:
-            self.pub_image.publish(msg)
-        # img_circle = cv2.circle(img,(int(self.u),int(self.v)),10,(255,0,0),-1) #point_stamped_cb
+    def set_cursor(self):
+        if self.pushed("left",2):  # :: change candidates
+            self.cursor +=1
+        elif self.pushed("right",2): #:: change candidates
+            self.cursor -=1
+        if(self.cursor < 0):
+            self.cursor = 0
+        if(len(self.left_transformer.u_v_list)/2 <= self.cursor):
+            self.cursor = len(self.left_transformer.u_v_list)/2 -1
+        self.left_transformer.cursor = self.cursor
+        self.right_transformer.cursor = self.cursor
+        print("\nset cursor -> {}\n".format(self.cursor))
         
     def set_button_state(self,left_msg,right_msg):
         print("in set_button_state : {}".format(self.left_flag_count))
@@ -198,37 +169,97 @@ class PutPointsOnImage(object):
         # rospy.wait_for_service(svc_name)
         try:
             Trigger_with_string = rospy.ServiceProxy('joy_trigger', TriggerWithString)
-            resp1 = Trigger_with_string(function,data)
+            resp = Trigger_with_string(function,data)
+            print("joy_trigger service response = {}".format(resp.res))
+            if resp.res == False:
+                self.set_state("sleep")
         except rospy.ServiceException, e:
             print "Service call failed: %s"%e
 
     #use service
     def transform(self, req):
         rospy.logdebug("in transform")
-        if not self.is_camera_arrived:
-            return
-        try:
-            # transform = self.tf_buffer.lookup_transform(self.frame_id, self.header_frame_id, rospy.Time(0), rospy.Duration(1.0))
-            transform = self.tf_buffer.lookup_transform(self.frame_id, req.frame_id.data, rospy.Time(0), rospy.Duration(1.0)) #lleg_end_coords was noting,then use BODY frame
-        except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
-            rospy.logerr('lookup_transform failed: {}'.format(e))
-            return
-        
-        u_v_list_tmp = []
-        points_list=req.l_points + req.r_points
-        for i in range (len(points_list)):
-            pose_stamped = PoseStamped()
-            pose_stamped.pose.position.x = points_list[i].x * 0.001
-            pose_stamped.pose.position.y = points_list[i].y * 0.001
-            pose_stamped.pose.position.z = points_list[i].z * 0.001
+        self.left_transformer.transform(req)
+        self.right_transformer.transform(req)
+
+    # def transform_pca(self):
+    #     rospy.logdebug("in transform pca")
+    #     if not self.is_camera_arrived:
+    #         return
+    #     try:
+    #         # transform = self.tf_buffer.lookup_transform(self.frame_id, self.header_frame_id, rospy.Time(0), rospy.Duration(1.0))
+    #         transform = self.tf_buffer.lookup_transform(self.frame_id, req.frame_id.data, rospy.Time(0), rospy.Duration(1.0)) #lleg_end_coords was noting,then use BODY frame
+    #     except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as e:
+    #         rospy.logerr('lookup_transform failed: {}'.format(e))
+    #         return
+    #     u_v_list_tmp = []
+    #     points_list=l_points + req.r_points
+    #     for i in range (len(points_list)):
+    #         pose_stamped = PoseStamped()
+    #         pose_stamped.pose.position.x = points_list[i].x * 0.001
+    #         pose_stamped.pose.position.y = points_list[i].y * 0.001
+    #         pose_stamped.pose.position.z = points_list[i].z * 0.001
             
-            position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
-            pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
-            u, v = self.cameramodels.project3dToPixel(pub_point)
-            rospy.logdebug("u, v : {}, {}".format(u, v))
-            u_v_list_tmp.append([u,v])
-        self.u_v_list = u_v_list_tmp
-        print ("u_v_list_tmp={}".format(u_v_list_tmp))
+    #         position_transformed = tf2_geometry_msgs.do_transform_pose(pose_stamped, transform).pose.position
+    #         pub_point = (position_transformed.x, position_transformed.y, position_transformed.z)
+    #         u, v = self.cameramodels.project3dToPixel(pub_point)
+    #         rospy.logdebug("u, v : {}, {}".format(u, v))
+    #         u_v_list_tmp.append([u,v])
+    #     self.u_v_list = u_v_list_tmp
+    #     print ("u_v_list_tmp={}".format(u_v_list_tmp))
+        
+    # def pca_cb(self, msg):
+    #     points_list = []
+    #     for poses in msg.poses:
+    #         points_list.append([poses[i].x, poses[i].y, poses[i].z])
+
+class DisplayTransformedPoints(object):
+    def __init__(self,image_topic_in,camera_info_topic_in,image_topic_out):
+        self.cameramodels = PinholeCameraModel()
+        self.is_camera_arrived = False
+        self.frame_id = None
+        self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1200.0))
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        self.bridge = CvBridge()
+        self.header_frame_id=""
+        self.u_v_list = []
+        self.state = "sleep"
+        self.cursor=0
+        
+        # self.pub_point_stamped = rospy.Publisher("~output/point_stamped", PointStamped, queue_size=1)
+        self.pub_image = rospy.Publisher(image_topic_out, Image, queue_size=1)
+        rospy.Subscriber(camera_info_topic_in, CameraInfo, self.camera_info_cb)
+        rospy.Subscriber(image_topic_in, Image, self.image_cb)
+
+    def camera_info_cb(self, msg):
+        self.cameramodels.fromCameraInfo(msg)
+        self.frame_id = msg.header.frame_id
+        self.is_camera_arrived = True
+
+    # when state==choosing : add circles to image and publish it
+    # when state == otherwise : only publish original image
+    def image_cb(self,msg):
+        self.header_frame_id = msg.header.frame_id
+        if self.state == "choosing" :
+            try:
+                img = self.bridge.imgmsg_to_cv2(msg,msg.encoding)
+            except CvBridgeError as e:
+                rospy.logerr('image_cb failed: {}'.format(e))
+
+            for i in range(len(self.u_v_list)):
+                if (i < len(self.u_v_list)/2):
+                    color=(0,0,255)
+                else:
+                    color=(255,0,0)
+                if (i == self.cursor or i == self.cursor + len(self.u_v_list)/2):
+                    size=16
+                else:
+                    size=10
+                img_circle = cv2.circle(img,(int(self.u_v_list[i][0]),int(self.u_v_list[i][1])),size,color,-1)
+                img_msg = self.bridge.cv2_to_imgmsg(img,msg.encoding)
+                self.pub_image.publish(img_msg)
+        else:
+            self.pub_image.publish(msg)
 
     def transform_pca(self):
         rospy.logdebug("in transform pca")

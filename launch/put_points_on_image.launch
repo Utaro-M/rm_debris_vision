@@ -22,11 +22,16 @@
 
   <node name="put_points_on_image"
         pkg="rm_debris_vision" type="put_points_on_image.py" output="screen">
-    <remap from="~input/camera_info" to="/multisense_local/left/camera_info" />
+    <!-- <remap from="~input/camera_info" to="/multisense_local/left/camera_info" /> -->
+    <!-- <remap from="~input/image" to="/multisense_local/left/image_rect_color" />  -->
+    <remap from="~input/camera_info_left" to="/multisense_local/left/camera_info" />
+    <remap from="~input/camera_info_right" to="/multisense_local/right/camera_info" />
+    <remap from="~input/image_left" to="/multisense_local/left/image_rect_color" />
+    <remap from="~input/image_right" to="/multisense_local/right/image_rect_color" />
+    <!-- <remap from="~output/image_left" to="~ -->
     <!-- <remap from="~input/point_stamped" to="reference_point_publisher/output" /> -->
     <remap from="~input/polygon_stamped" to="reference_polygon_publisher/output" />
     <!-- <remap from="~input/polygon" to="get_plane/focus_plane" /> -->
-    <remap from="~input/image" to="/multisense_local/left/image_rect_color" />
     <remap from="~vive_left" to="/vive_left" />
     <remap from="~vive_right" to="/vive_right" />
     <!-- tablis jikki -->
