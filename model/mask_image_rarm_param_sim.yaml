@@ -1,0 +1,5 @@
+robot_description: "JAXON_RED"
+self_see_links:
+ - name: RARM_FINGER0
+ - name: RARM_FINGER1
+self_see_default_padding: 0.1

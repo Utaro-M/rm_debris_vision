@@ -12,17 +12,17 @@
   <arg name="camera_info"
        default="/multisense_local/left/camera_info" />
   <arg name="SELF_FILTER_PARAM"
-       default="/home/utaro/research/rm_debris/rm_board/models/self_filter_param_sim.yaml" if="$(arg sim)"/>
+       default="$(find rm_debris_vision)/model/self_filter_param_sim.yaml" if="$(arg sim)"/>
   <arg name="SELF_FILTER_PARAM"
-       default="/home/leus/catkin_ws/jaxon_tutorial/src/matsuura_rm_debris/rm_board/models/self_filter_param.yaml" unless="$(arg sim)"/> 
+       default="$(find rm_debris_vision)/model/self_filter_param.yaml" unless="$(arg sim)"/>
   <arg name="MASK_IMAGE_LARM_PARAM"
-       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_larm_param_sim.yaml" if="$(arg sim)"/>
+       default="$(find rm_debris_vision)/model/mask_image_larm_param_sim.yaml" if="$(arg sim)"/>
   <arg name="MASK_IMAGE_LARM_PARAM"
-       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_larm_param.yaml" unless="$(arg sim)"/>  
+       default="$(find rm_debris_vision)/model/mask_image_larm_param.yaml" unless="$(arg sim)"/>
   <arg name="MASK_IMAGE_RARM_PARAM"
-       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_rarm_param_sim.yaml" if="$(arg sim)"/>
+       default="$(find rm_debris_vision)/model//mask_image_rarm_param_sim.yaml" if="$(arg sim)"/>
   <arg name="MASK_IMAGE_RARM_PARAM"
-       default="/home/utaro/research/rm_debris/rm_board/models/mask_image_rarm_param.yaml" unless="$(arg sim)"/>  
+       default="$(find rm_debris_vision)/model//mask_image_rarm_param.yaml" unless="$(arg sim)"/>
 
   <arg name="filtered_cloud"
        default="/self_filter/filtered_cloud" />
@@ -86,6 +86,7 @@
       <remap from="~input/box" to="bounding_box_publisher_rarm/output" />
       <rosparam>
         use_multiple_attention: false <!-- true -->
+        frame_id: BODY
       </rosparam>
     </node>
 
@@ -137,6 +138,7 @@
       <remap from="~input/box" to="bounding_box_publisher_larm/output" />
       <rosparam>
         use_multiple_attention: false
+        frame_id: BODY
       </rosparam>
     </node>
 
@@ -174,6 +176,7 @@
       <remap from="~input/box" to="bounding_box_publisher_cover_rarm/output" />      
       <rosparam>
         use_multiple_attention: false
+        frame_id: BODY
       </rosparam>
     </node>
     
@@ -210,6 +213,7 @@
       <remap from="~input/box" to="bounding_box_publisher_cover_larm/output" />
       <rosparam>
         use_multiple_attention: false
+        frame_id: BODY
       </rosparam>
     </node>
 
