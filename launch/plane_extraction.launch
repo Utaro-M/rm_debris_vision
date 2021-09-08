@@ -1,5 +1,7 @@
 <launch>
-  <arg name="sim" default="true"/>
+  <arg name="sim" default="false"/>
+  <arg name="gui" default="false"/>
+  <arg name="stick" default="false"/>
   <arg name="input_cloud"
        default="/multisense_local/organized_image_points2_color" if="$(arg sim)"/>
   <arg name="input_cloud"
@@ -127,7 +129,7 @@
   
   <!-- 棒の認識 -->
   <arg name="grid_cloud" value="voxelgrid/output" />
-  <group ns="stick_pose">
+  <group ns="stick_pose" if = "$(arg stick)">
     <node name="line_segment_manager"
           pkg="nodelet" type="nodelet"
           args="manager" output="screen" />
@@ -224,11 +226,13 @@
   <!--     </rosparam> -->
   <!--   </node> -->
   </group>
-  
-  <node name="rviz"
-        pkg="rviz" type="rviz"
-        args="-d /home/utaro/research/rm_debris/rm_board/display/plane_extraction.rviz"/>
-  
+
+  <group if = "$(arg gui)">
+    <node name="rviz"
+          pkg="rviz" type="rviz"
+          args="-d /home/utaro/research/rm_debris/rm_board/display/plane_extraction.rviz"/>
+  </group>
+
 </launch>
 
     <!-- 平面のエッジ検出 -->

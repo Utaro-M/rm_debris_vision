@@ -2,9 +2,10 @@
 <!-- ２．カメラと手先間の領域の点群抽出 -->
 <!-- ３．手先が視野内にあるかどうかの判定 -->
 <launch>
-  <arg name="sim" default="true"/>
+  <arg name="sim" default="false"/>
   
-  <rosparam param="/use_sim_time">"$(arg sim)"</rosparam>
+  <rosparam param="/use_sim_time" if = "$(arg sim)">true</rosparam>
+  <rosparam param="/use_sim_time" unless = "$(arg sim)">false</rosparam>
   <arg name="input_cloud"
        default="/multisense_local/organized_image_points2_color" if="$(arg sim)"/>
   <arg name="input_cloud"
@@ -20,14 +21,15 @@
   <arg name="MASK_IMAGE_LARM_PARAM"
        default="$(find rm_debris_vision)/model/mask_image_larm_param.yaml" unless="$(arg sim)"/>
   <arg name="MASK_IMAGE_RARM_PARAM"
-       default="$(find rm_debris_vision)/model//mask_image_rarm_param_sim.yaml" if="$(arg sim)"/>
+       default="$(find rm_debris_vision)/model/mask_image_rarm_param_sim.yaml" if="$(arg sim)"/>
   <arg name="MASK_IMAGE_RARM_PARAM"
-       default="$(find rm_debris_vision)/model//mask_image_rarm_param.yaml" unless="$(arg sim)"/>
+       default="$(find rm_debris_vision)/model/mask_image_rarm_param.yaml" unless="$(arg sim)"/>
 
   <arg name="filtered_cloud"
        default="/self_filter/filtered_cloud" />
   <arg name="manager"
-       default="plane_extraction_manager" />
+       default="check_in_hand_with_cover_invision_manager" />
+       <!-- default="plane_extraction_manager" /> -->
 
   
   <node pkg="rm_debris_vision" name="count_points" type="count_points.py" output="screen" />
@@ -71,7 +73,7 @@
         z: 0
         <!-- w: 0.2 -->
         <!-- d: 0.2 -->
-        w: 0.15        
+        w: 0.15
         d: 0.15
         h: 0.25
         <!-- h: 0.2        -->
@@ -85,8 +87,8 @@
       <!-- <remap from="~input/box_array" to="bounding_box_array_publisher_rarm/output" /> -->
       <remap from="~input/box" to="bounding_box_publisher_rarm/output" />
       <rosparam>
-        use_multiple_attention: false <!-- true -->
-        frame_id: BODY
+        use_multiple_attention: false
+        frame_id: rarm_end_coords
       </rosparam>
     </node>
 
@@ -138,7 +140,7 @@
       <remap from="~input/box" to="bounding_box_publisher_larm/output" />
       <rosparam>
         use_multiple_attention: false
-        frame_id: BODY
+        frame_id: larm_end_coords
       </rosparam>
     </node>
 
@@ -176,7 +178,7 @@
       <remap from="~input/box" to="bounding_box_publisher_cover_rarm/output" />      
       <rosparam>
         use_multiple_attention: false
-        frame_id: BODY
+        frame_id: lleg_end_coords
       </rosparam>
     </node>
     
@@ -213,7 +215,7 @@
       <remap from="~input/box" to="bounding_box_publisher_cover_larm/output" />
       <rosparam>
         use_multiple_attention: false
-        frame_id: BODY
+        frame_id: lleg_end_coords
       </rosparam>
     </node>
 
