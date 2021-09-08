@@ -11,7 +11,7 @@
   <arg name="input_cloud"
        default="/rs_l515/depth_registered/points" unless="$(arg sim)"/>
   <arg name="camera_info"
-       default="/multisense_local/left/camera_info" />
+       default="/rs_l515/color/camera_info" />
   <arg name="SELF_FILTER_PARAM"
        default="$(find rm_debris_vision)/model/self_filter_param_sim.yaml" if="$(arg sim)"/>
   <arg name="SELF_FILTER_PARAM"

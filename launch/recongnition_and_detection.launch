@@ -1,0 +1,13 @@
+<launch>
+  <arg name="sim" default="false"/>
+  <include file="$(find rm_debris_vision)/launch/plane_extraction.launch">
+    <!-- <arg name="sim" value="$(arg sim)"/> -->
+    <!-- <arg name="gui" value="false"/> -->
+    <!-- <arg name="stick" value="false"/> -->
+  </include>
+
+  <include file = "$(find rm_debris_vision)/launch/check_in_hand_with_cover_invision.launch">
+    <arg name="sim" value="$(arg sim)"/>
+  </include>
+
+</launch>

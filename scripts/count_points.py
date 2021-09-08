@@ -24,7 +24,8 @@ threshould_in_vision=2000
 # length_r=0
 in_vision_r=1
 in_vision_l=1
-
+in_vision_num_r = 0
+in_vision_num_l = 0
 def timer_cb(msg1,msg2,msg3,msg4):
     # planes_indices_l = msg1.indices
     # planes_indices_r = msg2.indices
@@ -56,15 +57,14 @@ def timer_cb(msg1,msg2,msg3,msg4):
         flag_cover_r= 1        
 
     # print('in_hand points   [r , l] = {}'.format([length_r,length_l]))
-    print('inhand R', length_r)
-    print('inhand L', length_l)
-    print('covered R', length_cover_r)
-    print('covered L', length_cover_l)    
+    print('inhand R    : {i:5d},  inhand L    : {j:5d}'.format(i=length_r, j=length_l))
+    print('covered R   : {i:5d},  covered L   : {j:5d}'.format(i=length_cover_r, j=length_cover_l))
+    print('in_vision R : {i:5d},  in_vision L : {j:5d}'.format(i=in_vision_num_r, j=in_vision_num_l))
     print('holding flag     [r , l] = {}'.format([flag_r,flag_l]))    
     # print('flag_l', flag_l)
     # print('flag_r', flag_r)
     # print('in_vision points [r , l] = {}'.format([in_vision_r,in_vision_l]))
-    print('arm coverd flag  [r , l] = {}'.format([flag_cover_r,flag_cover_l]))
+    print('arm covered flag  [r , l] = {}'.format([flag_cover_r,flag_cover_l]))
     print('in_vision flag   [r , l] = {}'.format([in_vision_r,in_vision_l]))
     pub_num_l.publish(length_l)
     pub_num_r.publish(length_r)        
@@ -76,14 +76,15 @@ def timer_cb(msg1,msg2,msg3,msg4):
 bridge=CvBridge()    
 def count_rarm(msg):
     global in_vision_r
+    global in_vision_num_r
     # img=msg.data
     img = bridge.imgmsg_to_cv2(msg, "mono8")
     # print('length', len(img))
     # print('num 0', np.count_nonzero(img==0))
     # print('num 255', np.count_nonzero(img==255))
-    num=np.count_nonzero(img==0)
-    # print('in_vision rarm num', num)
-    if num < threshould_in_vision:
+    in_vision_num_r=np.count_nonzero(img==0)
+    # print('in_vision rarm in_vision_num_r', in_vision_num_r)
+    if in_vision_num_r < threshould_in_vision:
         in_vision_r= 0
     else:
         in_vision_r= 1
@@ -91,10 +92,11 @@ def count_rarm(msg):
     
 def count_larm(msg):
     global in_vision_l
+    global in_vision_num_l
     img = bridge.imgmsg_to_cv2(msg, "mono8")
-    num=np.count_nonzero(img==0)
-    # print('in_vision larm num', num)
-    if num < threshould_in_vision:
+    in_vision_num_l=np.count_nonzero(img==0)
+    # print('in_vision larm in_vision_num_l', in_vision_num_l)
+    if in_vision_num_l < threshould_in_vision:
         in_vision_l= 0
     else:
         in_vision_l= 1
@@ -130,7 +132,7 @@ if __name__ == '__main__':
 
     rospy.Subscriber("/robot_to_mask_image_rarm/output",Image,count_rarm)
     # rospy.Subscriber("/mask_image_to_label/output",Image,count_rarm)    
-    rospy.Subscriber("/robot_to_mask_image_larm/output",Image,count_larm)    
+    rospy.Subscriber("/robot_to_mask_image_larm/output",Image,count_larm)
     fps=0.1
     delay=1 / fps *0.5
 
