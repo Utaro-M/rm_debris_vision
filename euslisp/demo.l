@@ -706,3 +706,36 @@
   (send *ri* :move-gripper :arms 0.0 :wait nil)
   (my-init-pose :send? t)
   )
+;;20210910
+
+(defun move-cop-test()
+  (my-init-pose :send? t)
+  (prepare-real-machine :set-ref-force-updater? nil)
+
+  (if (not (y-or-n-p "Do you put the robot on ground?"))
+      (progn
+	(send *ri* :stop-impedance :arms)
+	(send *ri* :stop-auto-balancer)
+	(return-from test-move-cop nil)))
+
+  (if (y-or-n-p "Do you start st?")
+      (progn
+	(send *ri* :start-st)
+	(format t "start st~%")))
+
+  (if (y-or-n-p "Do you set reaching pose?")
+      (progn
+	(format t "reaching-pose-20210910")
+	(reaching-pose-20210910 :send? t)))
+
+  (if (y-or-n-p "Do you set reference force updater?")
+      (progn
+	(send *ri* :set-reference-force-updater-param :arms :motion-dir #f(0 0 -1) :p-gain 0.01 :update-time-ratio 1.0 :frame "world")
+	(send *ri* :start-reference-force-updater :arms)
+	(print "set ref force updater ON")))
+  )
+
+;; #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531)
+
+;;少し前
+;; #f(-7.97056 -6.80164 -89.2676 93.8233 -20.5217 8.72121 2.41467 8.3947 -89.8705 93.0 -19.2407 -8.73255 1.15862 3.0 -2.09546 2.61912 5.57989 37.0 2.47211 -87.0 -27.1373 -86.4121 -4.78718 36.8264 39.7968 -37.0 4.99321 87.0 29.5625 -84.5292 -0.286369 -38.5271 28.5666)

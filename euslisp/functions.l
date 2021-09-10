@@ -1,6 +1,6 @@
 (require "models/arrow-object.l")
-;; (require "package://control_tools/log-tools.l")
-;; (require "package://control_tools/play-hrpsysfile.l")
+(require "package://control_tools/log-tools.l")
+(require "package://control_tools/play-hrpsysfile.l")
 (require "package://hrpsys_ros_bridge_tutorials/euslisp/jaxon_red-interface.l")
 ;; (load "package://hrpsys_ros_bridge_tutorials/euslisp/jaxon_red-interface.l")
 (load "./class.l")
@@ -56,6 +56,8 @@
   )
 
 (defun prepare-real-machine(&key (set-ref-force-updater? t) (emergency-off? t))
+  (send *ri* :remove-force-sensor-offset-rmfo-arms)
+  (unix:sleep 1)
   (send *ri* :start-auto-balancer :limbs (list :lleg :rleg :larm :rarm))
   ;; (send *ri* :start-impedance :arms :m-p 100 :d-p 10000 :k-p 500 :k-r 200)
   ;; (send *ri* :start-impedance :arms :m-p 100 :d-p 10000 :k-p 300 :k-r 200) ;;0110
@@ -1041,7 +1043,7 @@
 (ros::roseus "hand_targets")
 (ros::advertise "/larm_target" geometry_msgs::PointStamped 1)
 (ros::advertise "/rarm_target" geometry_msgs::PointStamped 1)
-(defun auto-set-reaching-targets
+(defun auto-set-reaching.-targets
     (&key (pos-shift 300) (larm-shift #f(-30 0 0)) (rarm-shift #f(-30 0 0)) (rot-z 20) (rot-x 0) (rot-y 0) (center-pos #f(0 0 0)) (axis 0) (edge-axis 1))
   ;; (setq ret (get-target-pose)) ;;0124 coment
   (setq ret (get-target-pose :axis axis :edge-axis edge-axis)) ;;
@@ -1537,7 +1539,7 @@
 
     ;; (send *ik-param* :set-rleg-wrench #f(0 0 0 0 0 0))
     ;; (send *ik-param* :set-lleg-wrench #f(0 0 0 0 0 0))
-    (setq ret (ik-opt rarm-coords larm-coords  :fix-contact? fix-contact?  :apply-external-force? apply-external-force? :wait? wait? :rleg-pos-shift rleg-pos-shift :lleg-pos-shift lleg-pos-shift  :kin-task-value-thre 0.15 :eom-trans-task-value-thre 30 :heave? heave? :arm arm))
+    (setq ret (ik-opt rarm-coords larm-coords  :fix-contact? fix-contact?  :apply-external-force? apply-external-force? :wait? wait? :rleg-pos-shift rleg-pos-shift :lleg-pos-shift lleg-pos-shift  :kin-task-value-thre 0.15  :heave? heave? :arm arm))
     (send *robot-env* :dissoc-root-virtual)
     ;;とき直し
     (if (equal ret nil)
@@ -1558,7 +1560,7 @@
 	  (send *ik-param* :set-lleg-wrench   (v+ (send *ik-param* :get-lleg-wrench-offset) (scale -1 half-wrench)))
 
           ;; (setq ret (ik-opt rarm-coords larm-coords :only-kinematics nil  :optimize-torque? nil :fix-contact? fix-contact? :avoid-collision? avoid-collision?  :wait? wait? :rleg-pos-shift rleg-pos-shift :lleg-pos-shift lleg-pos-shift :arm (if (equal target "board") arm "rarm")  :kin-task-value-thre 0.15 :eom-trans-task-value-thre 0.15))
-	  (setq ret (ik-opt rarm-coords larm-coords  :fix-contact? fix-contact?  :apply-external-force? apply-external-force? :wait? wait? :rleg-pos-shift rleg-pos-shift :lleg-pos-shift lleg-pos-shift  :kin-task-value-thre 0.15 :eom-trans-task-value-thre 30 :heave? heave? :arm arm))
+	  (setq ret (ik-opt rarm-coords larm-coords  :fix-contact? fix-contact?  :apply-external-force? apply-external-force? :wait? wait? :rleg-pos-shift rleg-pos-shift :lleg-pos-shift lleg-pos-shift  :kin-task-value-thre 0.15  :heave? heave? :arm arm))
       (send *robot-env* :dissoc-root-virtual)))
     ;; (send *robot* :head-neck-p :joint-angle -40)
     (format t "ret ik = ~A~%" ret)
@@ -2739,6 +2741,46 @@
 
 (print "load functions.l")
 
+;;IKを解かない方
+;;(ik-opt rarm-pose larm-pose :only-kinematics nil :avoid-collision t :optimize-torque? nil :fix-contact? nil :obst? t))
+;; ik-paramik-param(send *ik-param* :set-eom-trans-task-value-thre 60)
+;;ver1
+;; setq rarm-pose (make-coords :pos #f(500 -300 550) :rpy #f( -0.055 0.592 -1.61))
+;; setq larm-pose (make-coords :pos #f(500 300 550) :rpy #f(-0.055 0.592 1.531))
+;; #f(-1.06369 -9.12229 -47.7087 110.229 -46.1102 8.45897 4.94983 11.4279 -49.3237 109.454 -43.7267 -9.59018 -3.25811 30.0 1.66353 0.052865 26.0 37.0 14.8904 -36.5502 -3.66631 -72.0657 39.0927 -8.45097 21.0838 -37.0 21.8887 42.7864 6.92934 -76.1037 -36.2951 6.9647 17.2716))
+;;(send *robot* :move-coords (make-coords :pos #f(29 181 0)) (send *robot* :lleg :end-coords))
+;;ver2
+;;setq rarm-pose (make-coords :pos #f(550 -300 550) :rpy #f( -0.055 0.592 -1.61))
+;;setq larm-pose (make-coords :pos #f(550 300 550) :rpy #f(-0.055 0.592 1.531))
+;; #f(-2.26559 -10.0425 -43.629 113.748 -50.9972 8.7637 -1.67092 11.2107 -42.6519 113.206 -51.2796 -11.1393 -4.12446 25.8333 2.37617 1.2517 26.0 37.0 13.3791 -37.6044 3.67961 -66.4696 32.6462 -9.46111 20.4329 -37.0 20.2943 43.7129 1.49983 -72.6188 -33.0007 4.75897 17.4462)
+;;(send *robot* :move-coords (make-coords :pos #f(10 180 0)) (send *robot* :lleg :end-coords))
+;;ver3
+;;setq rarm-pose (make-coords :pos #f(550 -300 550) :rpy #f( -0.055 0.592 -1.6))
+;;setq larm-pose (make-coords :pos #f(550 300 550) :rpy #f(-0.055 0.592 1.69))
+;; #f(1.13438 -11.5861 -42.8551 115.133 -51.4722 11.245 -1.26385 11.2066 -42.8046 115.237 -51.6505 -10.9354 -0.907065 30.0 0.822421 -0.02124 26.0 37.0 18.1489 -41.3619 -3.63484 -74.319 33.5323 -4.55815 22.4775 -37.0 18.401 43.1654 3.03471 -75.5163 -36.6286 2.43948 18.5981)
+;;
+;; #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531)
+
+;;
+;; #f(-7.97056 -6.80164 -89.2676 93.8233 -20.5217 8.72121 2.41467 8.3947 -89.8705 93.0 -19.2407 -8.73255 1.15862 3.0 -2.09546 2.61912 5.57989 37.0 2.47211 -87.0 -27.1373 -86.4121 -4.78718 36.8264 39.7968 -37.0 4.99321 87.0 29.5625 -84.5292 -0.286369 -38.5271 28.5666)
+
+(defun reaching-pose-20210910 (&key (send? nil) (fix-contact? nil) (look-at-object? nil))
+  (my-init-pose :move-foot? nil :send? send?)
+
+  (send *coords* :set-rleg-coords (send *robot* :rleg :end-coords :copy-worldcoords))
+  (send *coords* :set-lleg-coords (send *robot* :lleg :end-coords :copy-worldcoords))
+
+  ;; (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531))
+  (send *robot* :angle-vector #f(-7.97056 -6.80164 -89.2676 93.8233 -20.5217 8.72121 2.41467 8.3947 -89.8705 93.0 -19.2407 -8.73255 1.15862 3.0 -2.09546 2.61912 5.57989 37.0 2.47211 -87.0 -27.1373 -86.4121 -4.78718 36.8264 39.7968 -37.0 4.99321 87.0 29.5625 -84.5292 -0.286369 -38.5271 28.5666))
+
+  (send *robot* :move-coords (make-coords :pos #f(10 190 0)) (send *robot* :lleg :end-coords))
+  (send *coords* :set-rleg-new-coords (send *robot* :rleg :end-coords :copy-worldcoords))
+  (send *coords* :set-lleg-new-coords (send *robot* :lleg :end-coords :copy-worldcoords))
+  (objects (list *robot* ))
+  (send-pose-and-move-on-foot :send? send? :fix-contact? fix-contact? :look-at-object? t)
+  (send *robot* :head-neck-p :joint-angle 0)
+  (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
+)
 ;; larm-coords next= #<coordinates #X7f6176c42a68  411.214 272.38 881.195 / 0.481 0.99 1.748>
 ;; rarm-coords next= #<coordinates #X7f6176c42d08  434.272 -412.57 894.724 / 0.196 0.999 -1.4
 ;; larm-coords next= #<coordinates #X7f61a4627550  514.705 289.401 1043.785 / 0.616 1.174 1.858>
