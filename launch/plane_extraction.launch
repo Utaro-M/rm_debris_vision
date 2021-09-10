@@ -20,10 +20,11 @@
   <!-- <rosparam param="/use_sim_time">true</rosparam> -->
 
   <!-- 自作  -->
-  <node pkg="rm_debris_vision" name="get_plane" type="get_plane_with_service.py" output="screen" />
-  <node pkg="rm_debris_vision" name="make_plane_realtime" type="make_plane_for_ik.l" output="screen" />
-  <node pkg="rm_debris_vision" name="make_plane_for_ik_loop" type="make_plane_for_ik_server.l" output="screen" />
-  <node pkg="rm_debris_vision" name="change_clip_box" type="change_clip_box_server.l" output="screen" />
+  <!-- fcでdisplay_plane_info.launch-->
+  <!-- <node pkg="rm_debris_vision" name="get_plane" type="get_plane_with_service.py" output="screen" /> -->
+  <!-- <node pkg="rm_debris_vision" name="make_plane_realtime" type="make_plane_for_ik.l" output="screen" /> -->
+  <!-- <node pkg="rm_debris_vision" name="make_plane_for_ik_loop" type="make_plane_for_ik_server.l" output="screen" /> -->
+  <!-- <node pkg="rm_debris_vision" name="change_clip_box" type="change_clip_box_server.l" output="screen" /> -->
   <!-- <node pkg="rm_debris_vision" name="predict_k_server" type="predict_k_server.py" output="screen" /> -->
 
   <group ns="plane_extraction">

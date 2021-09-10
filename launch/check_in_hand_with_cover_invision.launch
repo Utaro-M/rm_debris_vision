@@ -33,7 +33,7 @@
 
   
   <node pkg="rm_debris_vision" name="count_points" type="count_points.py" output="screen" />
-  <node pkg="rm_debris_vision" name="change_clip_area_server" type="change_clip_area_server.l" output="screen" />  
+  <node pkg="rm_debris_vision" name="change_clip_area_server" type="change_clip_area_server.l" output="screen" />
   <!-- <node pkg="rm_debris_vision" name="change_clip_box" type="change_clip_box_server.l" output="screen" /> -->
 
   <!-- self filter -->
