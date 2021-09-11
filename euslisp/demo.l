@@ -735,6 +735,25 @@
 	(print "set ref force updater ON")))
   )
 
+(defun record-log(&key (check? t))
+  (if (y-or-n-p "Do you stop reference force updater?")
+      (send *ri* :stop-reference-force-updater :arms))
+
+  (if (y-or-n-p "Do you start record.launch?")
+      (format t "start"))
+
+  (send *ri* :start-log)
+  (format t "start log")
+  (unix::sleep 1)
+  (send *ri* :start-reference-force-updater :arms)
+  (unix::sleep 6)
+  (if check?
+      (progn
+	(format t "check")
+	(check-func :working? nil)))
+  (unix::sleep 3)
+  (save-log :log-dir "matsuura/log")
+  )
 ;; #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531)
 
 ;;少し前
