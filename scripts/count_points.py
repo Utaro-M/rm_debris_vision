@@ -120,8 +120,10 @@ def get_trigger (req):
 if __name__ == '__main__':
     rospy.init_node('count_points')
 
-    pub_num_l = rospy.Publisher('/larm/num', Int32, queue_size=1)
-    pub_num_r = rospy.Publisher('/rarm/num', Int32, queue_size=1)    
+    # pub_num_l = rospy.Publisher('/larm/num', Int32, queue_size=1)
+    # pub_num_r = rospy.Publisher('/rarm/num', Int32, queue_size=1)
+    pub_num_l = rospy.Publisher('/larm_num', Int32, queue_size=1)
+    pub_num_r = rospy.Publisher('/rarm_num', Int32, queue_size=1)
     # pub_drop_flag_l = rospy.Publisher('/drop_flag_larm', Bool, queue_size=1)
     # pub_drop_flag_r = rospy.Publisher('/drop_flag_rarm', Bool,  queue_size=1)
     pub_drop_flag = rospy.Publisher('/drop_flag_list', Int32MultiArray, queue_size=1)
