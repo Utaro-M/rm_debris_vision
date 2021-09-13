@@ -82,7 +82,7 @@
     (send *ri* :set-st-param :emergency-check-mode 0)
     (send *ri* :start-st)))
   (send *ri* :set-log-maxlength (* 500 300))
-  (setq movetime 12000)
+  (setq movetime 11000)
   ;; (setq wei 0)
   ;; (mapcar #'(lambda (vertice) (setq wei (+ wei (send  vertice :weight)))) (send *robot* :links))
   ;; (send *ik-param* :set-rleg-wrench-offset (float-vector 0 0 (* 0.01 (/ wei 2)) 0 0 0))
@@ -542,7 +542,8 @@
     ;;drop判定 '(? ?) ?<- 0 or 1
     ;;rarm
     (format t "(rarm, larm) = (")
-    (if (or (= (car holding-flag-pcl) 2) (= (car holding-flag-pcl) 3)) ;;coverもしくは視野外のときは力判定、それ以外は視覚判定
+    ;; (if (or (= (car holding-flag-pcl) 2) (= (car holding-flag-pcl) 3)) ;;coverもしくは視野外のときは力判定、それ以外は視覚判定
+    (if nil ;;coverもしくは視野外のときは力判定、それ以外は視覚判定
         (progn
           ;; (print "rarm covered")
 	  (format t "covered, ")
@@ -552,7 +553,8 @@
         (format t  "not covered, ")
 	(setf (car holding-flag) (car holding-flag-pcl))))
     ;;larm
-    (if (or (= (cadr holding-flag-pcl) 2) (= (cadr holding-flag-pcl) 3)) ;;coverもしくは視野外のときは力判定、それ以外は視覚判定
+    ;; (if (or (= (cadr holding-flag-pcl) 2) (= (cadr holding-flag-pcl) 3)) ;;coverもしくは視野外のときは力判定、それ以外は視覚判定
+    (if nil
         (progn
           ;; (print "larm covered")
 	  (format t "covered)~%")
@@ -1659,9 +1661,9 @@
   (format t "force thre list = ~A~%" force-thre-list)
   (format t "pcl thre list = ~A~%" num-thre-list)
   (setq pos-shift 230)
+  (send *ri* :set-reference-force-updater-param :arms :transition-time 0.3) ;;stop ref force updaterの際の元の姿勢への戻りにかける時間
   ;; (send *ri* :set-reference-force-updater-param :arms :transition-time 0.3) ;;stop ref force updaterの際の元の姿勢への戻りにかける時間
-  ;; (send *ri* :set-reference-force-updater-param :arms :transition-time 0.3) ;;stop ref force updaterの際の元の姿勢への戻りにかける時間
-  (send *ri* :set-reference-force-updater-param :arms :transition-time 0.2) ;;stop ref force updaterの際の元の姿勢への戻りにかける時間
+  ;; (send *ri* :set-reference-force-updater-param :arms :transition-time 0.2) ;;stop ref force updaterの際の元の姿勢への戻りにかける時間
   
   (setq holding-flag (check-force-pcl :working? working? :force-thre-list force-thre-list :sleep-time 10000))
   ;; (reset-coords)
@@ -1703,7 +1705,7 @@
 	      (move-on-foot (send *robot* :rleg :end-coords :copy-worldcoords) (send *robot* :lleg :end-coords :copy-worldcoords) (send (send *robot* :rleg :end-coords :copy-worldcoords) :translate #f(-100 0 0) :world) (send (send *robot* :lleg :end-coords :copy-worldcoords) :translate #f(-100 0 0) :world))
 	      (reach-auto :send? send? :pos-shift 310 :adjust? nil :ik1? nil :larm-shift #f(0 -10 0) :rarm-shift #f(0 10 0) :fix-contact? 2 :reaching-offset (list #f(-50 -0 0) #f(-50 0 0)) :rot-z 5))
 	     )))
-      ))
+      )))
   )
 
 ;;rerach targets 確認用
@@ -2797,9 +2799,9 @@
   ;;もっともっと手前
   ;; (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 27.327 23.0319 -88.2261 -29.5865 -103.184 -11.8835 20.9028 45.7596 -26.083 23.9613 88.4711 28.9511 -100.831 8.41366 -21.3499 34.5841))
   ;;もっと手間
-  (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 31.9901 24.2679 -87.5916 -28.412 -94.1628 -8.67674 19.394 40.3525 -31.4119 25.1354 87.7306 27.8098 -92.2184 5.68338 -19.4733 30.3782))
+  ;; (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 31.9901 24.2679 -87.5916 -28.412 -94.1628 -8.67674 19.394 40.3525 -31.4119 25.1354 87.7306 27.8098 -92.2184 5.68338 -19.4733 30.3782))
   ;;手前
-  ;; (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531))
+  (send *robot* :angle-vector #f(-5.57618 -9.21878 -63.5533 93.2822 -28.3216 9.0774 -0.198991 8.09643 -64.3271 93.0 -27.262 -8.09872 1.5526 16.9988 -2.72753 3.55601 -8.36808 37.0 25.3324 -87.0 -27.3911 -84.1968 -6.07652 17.782 34.5076 -37.0 26.1394 87.0 26.8134 -82.603 3.46248 -17.5683 25.5531))
   ;; 奥
   ;; (send *robot* :angle-vector #f(-7.97056 -6.80164 -89.2676 93.8233 -20.5217 8.72121 2.41467 8.3947 -89.8705 93.0 -19.2407 -8.73255 1.15862 3.0 -2.09546 2.61912 5.57989 37.0 2.47211 -87.0 -27.1373 -86.4121 -4.78718 36.8264 39.7968 -37.0 4.99321 87.0 29.5625 -84.5292 -0.286369 -38.5271 28.5666))
 
@@ -2809,7 +2811,7 @@
   (objects (list *robot* ))
   (send-pose-and-move-on-foot :send? send? :fix-contact? fix-contact? :look-at-object? t)
   ;; (send *robot* :head-neck-p :joint-angle 0)
-  (send *robot* :head-neck-p :joint-angle -15)
+  (send *robot* :head-neck-p :joint-angle -18)
   (send *robot* :head-neck-y :joint-angle -2)
   (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
   )

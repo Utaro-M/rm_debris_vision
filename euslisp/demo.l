@@ -710,7 +710,8 @@
 
 (defun move-cop-test()
   (my-init-pose :send? t)
-  (prepare-real-machine :set-ref-force-updater? nil)
+  (if (y-or-n-p "Do you prepare-real-machine?")
+      (prepare-real-machine :set-ref-force-updater? nil))
 
   (if (not (y-or-n-p "Do you put the robot on ground?"))
       (progn
@@ -736,8 +737,8 @@
   )
 
 (defun record-log(&key (check? t))
-  (if (y-or-n-p "Do you stop reference force updater?")
-      (send *ri* :stop-reference-force-updater :arms))
+  ;; (if (y-or-n-p "Do you stop reference force updater?")
+  ;;     (send *ri* :stop-reference-force-updater :arms))
 
   (if (y-or-n-p "Do you start record.launch?")
       (format t "start"))
