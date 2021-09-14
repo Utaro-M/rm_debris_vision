@@ -1,0 +1,20 @@
+<launch>
+  <!-- jaxonredvision  rosbag play check_in_hand_flag22_force_detection_late_plus_2021-09-12-20-32-24.bag --clock -->
+  <!-- jaxonredvision  roslaunch rm_debris_vision check_in_hand_with_cover_invision.launch -->
+  <!-- jaxonredvision  roslaunch rm_debris_vision record_get_graph_all.launch -->
+  <arg name="bags_directory" value="/tmp"/>
+  <arg name="file_name" default="check_in_hand"/>
+  <node name="bag_record" pkg="rosbag" type="record"
+        args="record -o $(arg bags_directory)/$(arg file_name)
+              /tf
+              /tf_static
+	      /rs_l515/depth_registered/points
+	      /rs_l515/color/image_rect_color
+	      /off_rhsensor
+	      /off_lhsensor
+	      /larm_num
+	      /rarm_num
+              /rs_l515/color/camera_info
+              /rs_l515/depth/camera_info
+              "/>
+</launch>
