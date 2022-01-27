@@ -3,7 +3,7 @@
 (load "package://eus_qp/optmotiongen/euslisp/validate-jacobian.l")
 ;; (require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
 (require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
-(require "package://rm_debris_vision/euslisp/manip_tyre/params.l")
+(require "package://rm_debris_vision/euslisp/manip_tire/params.l")
 
 (defun setup-jaxon_red-ik-opt
     (&key (only-kinematics? nil))
@@ -41,7 +41,7 @@
   (unless only-kinematics?
 
     (create-support-polygon *robot* (send *robot* :link "RARM_LINK7"))
-    (create-support-polygon *robot* (send *robot* :link "LARM_LINK7"))    
+    (create-support-polygon *robot* (send *robot* :link "LARM_LINK7"))
     (create-support-polygon *robot* (send *robot* :link "RLEG_LINK5"))
     (create-support-polygon *robot* (send *robot* :link "LLEG_LINK5"))
     )

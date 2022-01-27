@@ -1,4 +1,4 @@
-(require "package://rm_debris_vision/euslisp/manip_tyre/my-ik-latest.l")
+(require "package://rm_debris_vision/euslisp/manip_tire/my-ik-latest.l")
 (defclass my-coords
   :super propertied-object
   :slots (rarm-coords larm-coords rleg-coords lleg-coords rleg-new-coords lleg-new-coords rarm-target-coords larm-target-coords pre-angle-vector ground-rleg ground-lleg)
@@ -31,7 +31,7 @@
   (:set-latest-angle-vector (val)     (setq latest-angle-vector val))
   (:set-ground-rleg (val)            (setq ground-rleg val))
   (:set-ground-lleg (val)            (setq ground-lleg val))
-  
+
   (:get-rarm-coords ()                 rarm-coords)
   (:get-larm-coords ()                 larm-coords)
   (:get-rleg-coords ()                 rleg-coords)
@@ -105,7 +105,7 @@
                         (instance robot-environment :init :robot *robot*
                                   :root-virtual-joint-min-angle-list (list -1.000000e+07 -1.000000e+07 -1.000000e+07 -1.745329e-08 -1.745329e+08 -1.745329e-08)
                                   :root-virtual-joint-max-angle-list (list 1.000000e+07 1.000000e+07 1.000000e+07 1.745329e-08 1.745329e+08 1.745329e-08))))
-                 ((or (equal (send self :get-contact-state) "free") (equal (send self :get-contact-state) "center")) ;;足は設定平面の中心位置or 
+                 ((or (equal (send self :get-contact-state) "free") (equal (send self :get-contact-state) "center")) ;;足は設定平面の中心位置or
                   (setq *contact-list*
                         (list (instance 2d-planar-contact :init :name "rleg")
                               (instance 2d-planar-contact :init :name "lleg")))
@@ -303,7 +303,7 @@
   (:set-avoid-collision? (val)                  (setq avoid-collision? val))
   (:set-my-coords (val)                         (setq *my-coords* val))
   (:set-obstacle (val)                          (setq *obstacle* val))
-  
+
   ;;不要？
   (:set-wait? (val)                             (setq wait? val))
   (:set-rleg-pos-shift(val)                     (setq rleg-pos-shift val))
@@ -342,7 +342,7 @@
   (:get-avoid-collision? ()                      avoid-collision? )
   (:get-my-coords ()                         *my-coords*)
   (:get-obstacle ()                          *obstacle*)
-  
+
   ;;不要？
   (:get-wait? ()                                 wait? )
   (:get-rleg-pos-shift()                         rleg-pos-shift )
@@ -367,7 +367,7 @@
            (send self :set-fix-contact? nil)
            (send self :set-avoid-collision? t)
            (send self :set-apply-external-force? t)
-           (send self :set-wait? t)  
+           (send self :set-wait? t)
            (send self :set-rleg-pos-shift #f(80 -20 0))
            (send self :set-lleg-pos-shift #f(80 20 0))
            ;; (send self :set-external-wrench-list (list
@@ -380,8 +380,8 @@
            (send self :set-rleg-wrench-offset (float-vector 0 0 530 0 0 0))
            (send self :set-lleg-wrench-offset (float-vector 0 0 530 0 0 0))
            ;; (send self :set-rleg-wrench-offset (float-vector 0 0 0 0 0 0))
-           ;; (send self :set-lleg-wrench-offset (float-vector 0 0 0 0 0 0))  
-           
+           ;; (send self :set-lleg-wrench-offset (float-vector 0 0 0 0 0 0))
+
            (send self :set-rleg-wrench rleg-wrench-offset)
            (send self :set-lleg-wrench lleg-wrench-offset)
            (send self :set-eom-rot-task-value-thre 0.01)
@@ -411,7 +411,7 @@
            )
          self)
 
-  
+
   (:set-only-kinematics? (val)                  (setq only-kinematics? val))
   (:set-optimize-torque? (val)                  (setq optimize-torque? val))
   (:set-fix-contact? (val)                      (setq fix-contact? val))
@@ -439,7 +439,7 @@
   (:set-eom-rot-task-value-thre (val)           (setq eom-rot-task-value-thre val))
   (:set-object(val)                             (setq obj val))
   (:set-force-move(val)                         (setq force-move val))
-  
+
   (:get-only-kinematics? ()                      only-kinematics?)
   (:get-optimize-torque? ()                      optimize-torque?)
   (:get-fix-contact? ()                          fix-contact? )
@@ -482,19 +482,19 @@
   (:set-fin-pose-ri (val)
                     (setq fin-pose-ri val))
   (:set-fin-pose-robot (val)
-                 (setq fin-pose-robot val))  
+                 (setq fin-pose-robot val))
   (:get-fin-pose-ri ()
                     fin-pose-ri )
   (:get-fin-pose-robot ()
                     fin-pose-robot )
-    
+
   )
 
 (defclass point-num-save
   :super propertied-object
   :slots (larm-points-num rarm-points-num)
   )
-(defmethod point-num-save 
+(defmethod point-num-save
   (:init (larm-points-num-init rarm-points-num-init)
          (send self :set-larm-points-num larm-points-num-init)
          (send self :set-rarm-points-num rarm-points-num-init)
@@ -503,7 +503,7 @@
   (:set-larm-points-num (val)
                         (setq larm-points-num val))
   (:set-rarm-points-num (val)
-                    (setq rarm-points-num val))      
+                    (setq rarm-points-num val))
   )
 
 ;; (setq *poses* (instance poses :init
