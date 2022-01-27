@@ -336,7 +336,7 @@
   (:get-eom-trans-task-value-thre ()             eom-trans-task-value-thre)
   (:get-eom-rot-task-value-thre ()               eom-rot-task-value-thre)
   (:get-kin-task-value-thre ()                   kin-task-value-thre)
-  (:get-convergence-check-func()             convergence-check-func )
+  (:get-convergence-check-func()             convergence-check-func)
   (:get-optimize-torque? ()                      optimize-torque?)
   (:get-contact-state ()                          contact-state )
   (:get-avoid-collision? ()                      avoid-collision? )

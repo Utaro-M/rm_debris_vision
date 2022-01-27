@@ -1,4 +1,4 @@
-(require "package://rm_debris_vision/euslisp/manip_tire/params.l")
+(require "package://rm_debris_vision/euslisp/params.l")
 
 (defun set-valiable
     (&key

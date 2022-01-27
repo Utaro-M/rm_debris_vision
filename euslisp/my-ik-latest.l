@@ -3,7 +3,8 @@
 (load "package://eus_qp/optmotiongen/euslisp/validate-jacobian.l")
 ;; (require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
 (require "package://eus_qp/optmotiongen/euslisp/inverse-kinematics-statics-wrapper.l")
-(require "package://rm_debris_vision/euslisp/manip_tire/params.l")
+(require "package://rm_debris_vision/euslisp/params.l")
+(print "load my-ik-latest.l")
 
 (defun setup-jaxon_red-ik-opt
     (&key (only-kinematics? nil))
@@ -82,8 +83,8 @@
   ;; (send (send *robot* :joint "LLEG_JOINT3") :min-angle 70)
 
   ;;for move-left one hand
-  (send (send *robot* :joint "RLEG_JOINT3") :min-angle 90)
-  (send (send *robot* :joint "LLEG_JOINT3") :min-angle 90)
+  ;; (send (send *robot* :joint "RLEG_JOINT3") :min-angle 90)
+  ;; (send (send *robot* :joint "LLEG_JOINT3") :min-angle 90)
   
 
   (send (send *robot* :joint "RARM_JOINT0") :min-angle 0)
@@ -211,7 +212,13 @@
                                            (validate-element-jacobian :config-task (send sqp :config-task))))
                                            ;; (validate-jacobian :config-task (send sqp :config-task))
                   :no-print? nil
-                  :convergence-check-func (send *ik-opt-param* :get-convergence-check-func)
+                  :convergence-check-func
+                  #'(lambda(sqp)
+                     (if (and (< (norm (send (send sqp :config-task) :kinematics-task-value :update? nil)) (send *ik-opt-param* :get-kin-task-value-thre))
+                              (< (norm (send (send sqp :config-task) :eom-rot-task-value :update? nil)) (send *ik-opt-param* :get-eom-rot-task-value-thre))
+                              (< (norm (send (send sqp :config-task) :eom-trans-task-value :update? nil)) (send *ik-opt-param* :get-eom-trans-task-value-thre)))
+                         t ;converge
+                       nil));; (send *ik-opt-param* :get-convergence-check-func)
                   :failure-callback-func #'(lambda(val)
                                              (print "fail"))))
   (send *sqp-opt* :optimize :loop-num 200)
@@ -222,5 +229,7 @@
         (send *robot* :move-coords (send *coords* :get-lleg-coords) (send *robot* :lleg :end-coords))
         nil
         )
-    t)
+    (setq *robot* (send (send *ik-opt-param* :get-robot-env) :robot))
+  ;; (send (send *robot* :joint "RLEG_JOINT3") :min-angle 0)
+  ;; (send (send *robot* :joint "LLEG_JOINT3") :min-angle 0)
   )
