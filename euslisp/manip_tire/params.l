@@ -1,4 +1,4 @@
-(require "package://rm_debris_vision/euslisp/manip_tire/my-ik-latest.l")
+
 (defclass my-coords
   :super propertied-object
   :slots (rarm-coords larm-coords rleg-coords lleg-coords rleg-new-coords lleg-new-coords rarm-target-coords larm-target-coords pre-angle-vector ground-rleg ground-lleg)
@@ -296,7 +296,7 @@
   (:set-pre-process-func (val)                  (setq pre-process-func val))
   (:set-eom-trans-task-value-thre (val)         (setq eom-trans-task-value-thre  val))
   (:set-eom-rot-task-value-thre (val)           (setq eom-rot-task-value-thre val))
-  (:set-kin-task-value-thre (val)               (setq kin-task-value-thre  val))
+  (:set-kin-task-value-thre (val)               (setq kin-task-value-thre val))
   (:set-convergence-check-func (val)            (setq convergence-check-func val))
   (:set-optimize-torque? (val)                  (setq optimize-torque? val))
   (:set-contact-state (val)                      (setq contact-state val))
