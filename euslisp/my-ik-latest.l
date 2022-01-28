@@ -225,8 +225,8 @@
   (if (equal (send *sqp-opt* :status) :not-converged)
       (progn
         (format t "ik failed~%")
-        (send *robot* :angle-vector (send *coords* :get-pre-angle-vector))
-        (send *robot* :move-coords (send *coords* :get-lleg-coords) (send *robot* :lleg :end-coords))
+        (send *robot* :angle-vector (send (send *ik-opt-param* :get-my-coords) :get-pre-angle-vector))
+        (send *robot* :move-coords (send (send *ik-opt-param* :get-my-coords) :get-lleg-coords) (send *robot* :lleg :end-coords))
         nil
         )
     (setq *robot* (send (send *ik-opt-param* :get-robot-env) :robot))
