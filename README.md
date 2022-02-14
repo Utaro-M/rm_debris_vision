@@ -14,3 +14,7 @@ realmachine: experiments for icra
 - class.l < params.l: 変数クラス
 - ik-opt-paramインスタンスでoptmotiongen用の変数を管理する
   ik-opt-solverはそのインスタンスをうけとり軌道生成を行う
+##### タイヤモデル
+- exchange_wrl.shによりtire_175-80r16.wrlからtire_175-80r16.wrlを生成
+- tire.wrlでジョイント等を定義。(tire_175-80r16.wrlを読み込み)
+- buildしてtire.wrlからmodels/TIRE*を生成

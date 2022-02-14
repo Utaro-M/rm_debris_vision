@@ -1,0 +1,8 @@
+##
+## auto generated file
+##
+##controller_configuration:
+##  - group_name: <joint group name>
+##    controller_name: <name of joint trajectory topic name>
+##    joint_list: ## list of using joints
+##      - <joint_name>

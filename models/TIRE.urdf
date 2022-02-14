@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot name="TIRE"
+       xmlns:xi="http://www.w3.org/2001/XInclude">
+  <link name="HANDBASE">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="package://rm_debris_vision/models/TIRE_meshes/HANDBASE_mesh.dae" scale="1 1 1" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 -0 0"/>
+      <geometry>
+        <mesh filename="package://rm_debris_vision/models/TIRE_meshes/HANDBASE_mesh.dae" scale="1 1 1" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.22366" />
+      <origin xyz="0.09829 0.00402 -0.00197" rpy="0 -0 0"/>
+      <inertia ixx="0.00198" ixy="0.00044" ixz="-0.00015" iyy="0.00506" iyz="5e-05" izz="0.00374"/>
+    </inertial>
+  </link>
+  <gazebo reference="HANDBASE">
+    <mu1>0.9</mu1>
+    <mu2>0.9</mu2>
+  </gazebo>
+</robot>

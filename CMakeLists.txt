@@ -15,7 +15,12 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_msgs
   message_generation
   cv_bridge
+  hrpsys_ros_bridge
+  euscollada
 )
+
+# make eusmodel
+compile_openhrp_model(${PROJECT_SOURCE_DIR}/model/tire/tire.wrl TIRE)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
