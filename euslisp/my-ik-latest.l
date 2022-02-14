@@ -133,6 +133,7 @@
   )
 
 (defun display-ik-opt-solver ()
+  ;; (format t "display-ik-opt-solver")
   ;;display
   (setq inner-width (* 0.45 (abs (- (elt (send *robot* :lleg :end-coords :worldpos) 1) (elt (send *robot* :rleg :end-coords :worldpos) 1)))))
   (setq *ground-rleg* (make-cube 500 (+ 250 inner-width) 20)) ;;200
@@ -155,7 +156,7 @@
     (send *irtviewer* :draw-floor 500)
     (send *irtviewer* :floor-color (float-vector 0 0 0))
     )
-  (setq display-list (list *robot*))
+  (setq display-list (list *robot* *ground-lleg* *ground-rleg*))
   (when (send *ik-opt-param* :get-avoid-collision?)
     (format t "avoid collision~%")
     ;; (if heave?
@@ -171,7 +172,7 @@
   (display-ik-opt-solver)
   (if (send *ik-opt-param* :get-reset?)
       (send (send *ik-opt-param* :get-robot-env) :robot :reset-manip-pose))
-
+  (send (send *ik-opt-param* :get-my-coords) :set-pre-angle-vector (send *robot* :angle-vector))
   ;; setup robot
   (setup-jaxon_red-ik-opt :only-kinematics? (send *ik-opt-param* :get-only-kinematics?))
   (setq *instant-config-task*
@@ -227,9 +228,10 @@
         (format t "ik failed~%")
         (send *robot* :angle-vector (send (send *ik-opt-param* :get-my-coords) :get-pre-angle-vector))
         (send *robot* :move-coords (send (send *ik-opt-param* :get-my-coords) :get-lleg-coords) (send *robot* :lleg :end-coords))
+        (display-ik-opt-solver)
         nil
         )
     (setq *robot* (send (send *ik-opt-param* :get-robot-env) :robot))
   ;; (send (send *robot* :joint "RLEG_JOINT3") :min-angle 0)
   ;; (send (send *robot* :joint "LLEG_JOINT3") :min-angle 0)
-  )
+  ))

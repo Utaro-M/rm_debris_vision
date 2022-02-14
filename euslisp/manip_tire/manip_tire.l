@@ -13,13 +13,14 @@
   (setq *robot* *jaxon_red*)
   )
 
-(defun manip-tire(&key (send? nil))
-  (let* ((*my-coords* (instance my-coords :init)))
+(defun manip-tire(&key (send? nil) (pose-idx 0))
+  (let* ((*my-coords* (instance my-coords :init))
+         (targetpos-list '((#f(450 -450 550) #f(450  450 550)) (#f(450 -450 150) #f(450  450 150)) (#f(450 -480 150) #f(450  480 150)))))
 
     (send-clip-box :target "in_hand" :box-position-list  '(#f(0 0 100) #f(0 0 100))  :size-vector-list (list #f(0.2 0.2 0.1) #f(0.2 0.2 0.1)) :tilt-vector-list (list #f(0 0 0) #f(0 0 0)))
-
-    (send *my-coords* :set-rarm-coords (make-coords :pos (float-vector 450 -450 550) :rpy (float-vector 0 (deg2rad  60) (deg2rad -90))))
-    (send *my-coords* :set-larm-coords (make-coords :pos (float-vector 450  450 550) :rpy (float-vector 0 (deg2rad  60) (deg2rad  90))))
+    (format t "(elt (elt targetpos-list pose-idx) 0) = ~A~%"  (elt (elt targetpos-list pose-idx) 0))
+    (send *my-coords* :set-rarm-coords (make-coords :pos (elt (elt targetpos-list pose-idx) 0) :rpy (float-vector 0 (deg2rad  60) (deg2rad -90))))
+    (send *my-coords* :set-larm-coords (make-coords :pos (elt (elt targetpos-list pose-idx) 1) :rpy (float-vector 0 (deg2rad  60) (deg2rad  90))))
 
     (setq *ik-opt-param* (set-valiable :mode "tire" :*my-coords* *my-coords*));; (instance ik-opt-param :init :*my-coords* *my-coords*))
     (ik-opt-solver :*ik-opt-param* *ik-opt-param*)
